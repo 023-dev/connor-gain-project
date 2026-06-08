@@ -12,6 +12,7 @@ import com.kbt.backend.core.user.application.UserQueryService;
 import com.kbt.backend.core.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -64,6 +65,8 @@ public class CommentApplicationService {
             final String commentId,
             final String content
     ) {
+        validateHasEditValue(content);
+
         final User user = userQueryService.findActiveUser(userId);
         postQueryService.findOne(postId);
         final Comment comment = commentQueryService.findOne(commentId);
@@ -92,6 +95,12 @@ public class CommentApplicationService {
     ) {
         if (!comment.belongsTo(postId)) {
             throw new ApiException(ErrorType.COMMENT_NOT_FOUND);
+        }
+    }
+
+    private void validateHasEditValue(final String content) {
+        if (!StringUtils.hasText(content)) {
+            throw new ApiException(ErrorType.INVALID_REQUEST);
         }
     }
 }

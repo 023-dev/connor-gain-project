@@ -1,5 +1,7 @@
 package com.kbt.backend.core.post.application;
 
+import com.kbt.backend.common.exception.ApiException;
+import com.kbt.backend.common.exception.ErrorType;
 import com.kbt.backend.core.post.application.dto.PostCreateResponse;
 import com.kbt.backend.core.post.application.dto.PostResponse;
 import com.kbt.backend.core.post.application.dto.PostsResponse;
@@ -9,6 +11,7 @@ import com.kbt.backend.core.user.application.UserQueryService;
 import com.kbt.backend.core.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -53,6 +56,8 @@ public class PostApplicationService {
             final String content,
             final String imageUrl
     ) {
+        validateHasEditValue(title, content, imageUrl);
+
         final User user = userQueryService.findActiveUser(userId);
         final Post post = postQueryService.findOne(postId);
 
@@ -68,5 +73,15 @@ public class PostApplicationService {
         final Post post = postQueryService.findOne(postId);
 
         postCommandService.delete(user.id(), post);
+    }
+
+    private void validateHasEditValue(
+            final String title,
+            final String content,
+            final String imageUrl
+    ) {
+        if (!StringUtils.hasText(title) && !StringUtils.hasText(content) && !StringUtils.hasText(imageUrl)) {
+            throw new ApiException(ErrorType.INVALID_REQUEST);
+        }
     }
 }

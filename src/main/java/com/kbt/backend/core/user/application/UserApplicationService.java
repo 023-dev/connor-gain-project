@@ -1,5 +1,7 @@
 package com.kbt.backend.core.user.application;
 
+import com.kbt.backend.common.exception.ApiException;
+import com.kbt.backend.common.exception.ErrorType;
 import com.kbt.backend.core.auth.application.AuthTokenService;
 import com.kbt.backend.core.auth.application.dto.AuthTokenResult;
 import com.kbt.backend.core.user.application.dto.UserMeResponse;
@@ -9,6 +11,7 @@ import com.kbt.backend.core.user.application.dto.UserUpdateResponse;
 import com.kbt.backend.core.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -62,6 +65,8 @@ public class UserApplicationService {
             final String nickname,
             final String profileImage
     ) {
+        validateHasUpdateValue(nickname, profileImage);
+
         final User user = userQueryService.findActiveUser(userId);
         final User editedUser = userCommandService.update(user, nickname, profileImage);
         return new UserUpdateResponse(editedUser.id(), editedUser.nickname(), editedUser.profileImage());
@@ -76,5 +81,14 @@ public class UserApplicationService {
 
     public void delete(final String userId) {
         userCommandService.delete(userId);
+    }
+
+    private void validateHasUpdateValue(
+            final String nickname,
+            final String profileImage
+    ) {
+        if (!StringUtils.hasText(nickname) && !StringUtils.hasText(profileImage)) {
+            throw new ApiException(ErrorType.INVALID_REQUEST);
+        }
     }
 }
