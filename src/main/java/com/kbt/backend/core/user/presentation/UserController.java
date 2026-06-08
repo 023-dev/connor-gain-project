@@ -2,9 +2,11 @@ package com.kbt.backend.core.user.presentation;
 
 import com.kbt.backend.core.auth.presentation.AccessToken;
 import com.kbt.backend.core.auth.presentation.Authenticated;
+import com.kbt.backend.core.auth.presentation.RefreshTokenCookie;
 import com.kbt.backend.core.auth.presentation.UserId;
 import com.kbt.backend.core.user.application.UserApplicationService;
 import com.kbt.backend.core.user.application.dto.UserMeResponse;
+import com.kbt.backend.core.user.application.dto.UserSigninResult;
 import com.kbt.backend.core.user.application.dto.UserSigninResponse;
 import com.kbt.backend.core.user.application.dto.UserSignupResponse;
 import com.kbt.backend.core.user.application.dto.UserUpdateResponse;
@@ -14,6 +16,7 @@ import com.kbt.backend.core.user.presentation.dto.UserSignupRequest;
 import com.kbt.backend.core.user.presentation.dto.UserUpdateRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -50,7 +53,10 @@ public class UserController {
     public ResponseEntity<UserSigninResponse> signin(
             @Valid @RequestBody final UserSigninRequest request
     ) {
-        return ResponseEntity.ok(userService.signin(request.email(), request.password()));
+        final UserSigninResult result = userService.signin(request.email(), request.password());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, RefreshTokenCookie.create(result.refreshToken()).toString())
+                .body(result.toResponse());
     }
 
     @PostMapping("/signout")
@@ -60,7 +66,9 @@ public class UserController {
             @AccessToken final String accessToken
     ) {
         userService.signout(userId, accessToken);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, RefreshTokenCookie.expire().toString())
+                .build();
     }
 
     @GetMapping("/me")
@@ -74,10 +82,13 @@ public class UserController {
     @DeleteMapping("/me")
     @Authenticated
     public ResponseEntity<Void> delete(
-            @UserId final String userId
+            @UserId final String userId,
+            @AccessToken final String accessToken
     ) {
-        userService.delete(userId);
-        return ResponseEntity.ok().build();
+        userService.delete(userId, accessToken);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, RefreshTokenCookie.expire().toString())
+                .build();
     }
 
     @PatchMapping("/me")

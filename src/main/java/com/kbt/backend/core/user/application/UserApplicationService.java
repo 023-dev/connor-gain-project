@@ -5,7 +5,7 @@ import com.kbt.backend.common.exception.ErrorType;
 import com.kbt.backend.core.auth.application.AuthTokenService;
 import com.kbt.backend.core.auth.application.dto.AuthTokenResult;
 import com.kbt.backend.core.user.application.dto.UserMeResponse;
-import com.kbt.backend.core.user.application.dto.UserSigninResponse;
+import com.kbt.backend.core.user.application.dto.UserSigninResult;
 import com.kbt.backend.core.user.application.dto.UserSignupResponse;
 import com.kbt.backend.core.user.application.dto.UserUpdateResponse;
 import com.kbt.backend.core.user.domain.User;
@@ -31,13 +31,13 @@ public class UserApplicationService {
         return new UserSignupResponse(user.id());
     }
 
-    public UserSigninResponse signin(
+    public UserSigninResult signin(
             final String email,
             final String password
     ) {
         final User user = userCommandService.signin(email, password);
         final AuthTokenResult tokenResult = authTokenService.issue(user.id());
-        return new UserSigninResponse(
+        return new UserSigninResult(
                 user.id(),
                 user.nickname(),
                 user.profileImage(),
@@ -81,6 +81,15 @@ public class UserApplicationService {
 
     public void delete(final String userId) {
         userCommandService.delete(userId);
+    }
+
+    public void delete(
+            final String userId,
+            final String accessToken
+    ) {
+        userCommandService.delete(userId);
+        authTokenService.revokeAccessToken(accessToken);
+        authTokenService.revokeRefreshTokens(userId);
     }
 
     private void validateHasUpdateValue(
