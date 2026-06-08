@@ -4,7 +4,6 @@ public record UserSigninResponse(
         String userId,
         String nickname,
         String profileImage,
-        String accessToken,
-        String refreshToken
+        String accessToken
 ) {
 }
