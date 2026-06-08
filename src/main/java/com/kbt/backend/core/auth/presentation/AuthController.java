@@ -1,14 +1,14 @@
 package com.kbt.backend.core.auth.presentation;
 
 import com.kbt.backend.core.auth.application.AuthApplicationService;
+import com.kbt.backend.core.auth.application.dto.AuthReissueResult;
 import com.kbt.backend.core.auth.application.dto.AuthReissueResponse;
-import com.kbt.backend.core.auth.presentation.dto.AuthReissueRequest;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,8 +22,11 @@ public class AuthController {
 
     @PostMapping("/reissue")
     public ResponseEntity<AuthReissueResponse> reissue(
-            @Valid @RequestBody final AuthReissueRequest request
+            @CookieValue(name = RefreshTokenCookie.NAME, required = false) final String refreshToken
     ) {
-        return ResponseEntity.ok(authService.reissue(request.refreshToken()));
+        final AuthReissueResult result = authService.reissue(refreshToken);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, RefreshTokenCookie.create(result.refreshToken()).toString())
+                .body(result.toResponse());
     }
 }
