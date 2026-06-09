@@ -30,7 +30,8 @@ public class PostJsonRepository implements PostRepository {
     public List<Post> findAllActive() {
         return posts.values().stream()
                 .filter(this::isActive)
-                .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
+                .sorted(Comparator.comparing(Post::getCreatedAt).reversed()
+                        .thenComparing(Post::id, Comparator.reverseOrder()))
                 .toList();
     }
 

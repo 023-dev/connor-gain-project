@@ -1,6 +1,7 @@
 package com.kbt.backend.core.post.application.like;
 
 import com.kbt.backend.core.post.application.PostQueryService;
+import com.kbt.backend.core.post.application.PostCommandService;
 import com.kbt.backend.core.post.application.like.dto.LikeResponse;
 import com.kbt.backend.core.post.domain.Post;
 import com.kbt.backend.core.user.application.UserQueryService;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class LikeApplicationService {
 
     private final LikeCommandService likeCommandService;
-    private final LikeQueryService likeQueryService;
+    private final PostCommandService postCommandService;
     private final PostQueryService postQueryService;
     private final UserQueryService userQueryService;
 
@@ -25,7 +26,8 @@ public class LikeApplicationService {
         final Post post = postQueryService.findOne(postId);
 
         likeCommandService.like(user.id(), post.id());
-        return new LikeResponse(post.id(), likeQueryService.countByPostId(post.id()), true);
+        final Post updatedPost = postCommandService.increaseLikeCount(post);
+        return new LikeResponse(post.id(), updatedPost.likeCount(), true);
     }
 
     public LikeResponse unlike(
@@ -36,6 +38,7 @@ public class LikeApplicationService {
         final Post post = postQueryService.findOne(postId);
 
         likeCommandService.unlike(user.id(), post.id());
-        return new LikeResponse(post.id(), likeQueryService.countByPostId(post.id()), false);
+        final Post updatedPost = postCommandService.decreaseLikeCount(post);
+        return new LikeResponse(post.id(), updatedPost.likeCount(), false);
     }
 }

@@ -18,6 +18,9 @@ public class Post extends BaseEntity {
     private String title;
     private String content;
     private String imageUrl;
+    private long likeCount;
+    private long commentCount;
+    private long viewCount;
     private boolean deleted;
 
     @Builder
@@ -27,6 +30,9 @@ public class Post extends BaseEntity {
             final String title,
             final String content,
             final String imageUrl,
+            final long likeCount,
+            final long commentCount,
+            final long viewCount,
             final boolean deleted
     ) {
         this.id = id;
@@ -34,6 +40,9 @@ public class Post extends BaseEntity {
         this.title = title;
         this.content = content;
         this.imageUrl = imageUrl;
+        this.likeCount = likeCount;
+        this.commentCount = commentCount;
+        this.viewCount = viewCount;
         this.deleted = deleted;
     }
 
@@ -58,6 +67,30 @@ public class Post extends BaseEntity {
 
     public boolean isWrittenBy(final String userId) {
         return this.userId.equals(userId);
+    }
+
+    public void incrementLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decrementLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
+
+    public void incrementCommentCount() {
+        this.commentCount++;
+    }
+
+    public void decrementCommentCount() {
+        if (this.commentCount > 0) {
+            this.commentCount--;
+        }
+    }
+
+    public void incrementViewCount() {
+        this.viewCount++;
     }
 
     public void delete() {

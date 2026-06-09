@@ -7,6 +7,8 @@ import com.kbt.backend.core.post.application.comment.dto.CommentResponse;
 import com.kbt.backend.core.post.application.comment.dto.CommentUpdateResponse;
 import com.kbt.backend.core.post.application.comment.dto.CommentsResponse;
 import com.kbt.backend.core.post.application.PostQueryService;
+import com.kbt.backend.core.post.application.PostCommandService;
+import com.kbt.backend.core.post.domain.Post;
 import com.kbt.backend.core.post.domain.comment.Comment;
 import com.kbt.backend.core.user.application.UserQueryService;
 import com.kbt.backend.core.user.domain.User;
@@ -22,6 +24,7 @@ public class CommentApplicationService {
 
     private final CommentCommandService commentCommandService;
     private final CommentQueryService commentQueryService;
+    private final PostCommandService postCommandService;
     private final PostQueryService postQueryService;
     private final UserQueryService userQueryService;
 
@@ -31,9 +34,10 @@ public class CommentApplicationService {
             final String content
     ) {
         final User user = userQueryService.findActiveUser(userId);
-        postQueryService.findOne(postId);
+        final Post post = postQueryService.findOne(postId);
 
         final Comment comment = commentCommandService.create(user.id(), postId, content);
+        postCommandService.increaseCommentCount(post);
         return new CommentCreateResponse(comment.id());
     }
 
@@ -82,10 +86,11 @@ public class CommentApplicationService {
             final String commentId
     ) {
         final User user = userQueryService.findActiveUser(userId);
-        postQueryService.findOne(postId);
+        final Post post = postQueryService.findOne(postId);
         final Comment comment = commentQueryService.findOne(commentId);
         validateBelongsToPost(comment, postId);
 
+        postCommandService.decreaseCommentCount(post);
         commentCommandService.delete(user.id(), comment);
     }
 

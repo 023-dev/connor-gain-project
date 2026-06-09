@@ -13,11 +13,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class PostApplicationService {
+
+    private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final int MAX_PAGE_SIZE = 20;
 
     private final PostCommandService postCommandService;
     private final PostQueryService postQueryService;
@@ -38,15 +44,31 @@ public class PostApplicationService {
     public PostResponse findOne(final String postId) {
         final Post post = postQueryService.findOne(postId);
         final User user = userQueryService.findActiveUser(post.userId());
-        return PostResponse.from(post, user);
+        final Post viewedPost = postCommandService.increaseViewCount(post);
+        return PostResponse.from(viewedPost, user);
     }
 
-    public PostsResponse findAll() {
-        final List<PostResponse> posts = postQueryService.findAll().stream()
+    public PostsResponse findAll(
+            final String cursor,
+            final Integer size
+    ) {
+        final int pageSize = resolvePageSize(size);
+        final PostCursor pageCursor = parseCursor(cursor);
+
+        final List<Post> pagePosts = postQueryService.findAll().stream()
+                .filter(post -> isAfterCursor(post, pageCursor))
+                .limit(pageSize + 1L)
+                .toList();
+
+        final boolean hasNext = pagePosts.size() > pageSize;
+        final List<Post> visiblePosts = hasNext ? pagePosts.subList(0, pageSize) : pagePosts;
+        final String nextCursor = hasNext ? encodeCursor(visiblePosts.getLast()) : null;
+
+        final List<PostResponse> posts = visiblePosts.stream()
                 .map(post -> PostResponse.from(post, userQueryService.findActiveUser(post.userId())))
                 .toList();
 
-        return new PostsResponse(posts);
+        return new PostsResponse(posts, nextCursor, hasNext);
     }
 
     public PostUpdateResponse edit(
@@ -83,5 +105,63 @@ public class PostApplicationService {
         if (!StringUtils.hasText(title) && !StringUtils.hasText(content) && !StringUtils.hasText(imageUrl)) {
             throw new ApiException(ErrorType.INVALID_REQUEST);
         }
+    }
+
+    private int resolvePageSize(final Integer size) {
+        final int resolvedSize = size == null ? DEFAULT_PAGE_SIZE : size;
+        if (resolvedSize < 1 || resolvedSize > MAX_PAGE_SIZE) {
+            throw new ApiException(ErrorType.INVALID_REQUEST);
+        }
+        return resolvedSize;
+    }
+
+    private PostCursor parseCursor(final String cursor) {
+        if (!StringUtils.hasText(cursor)) {
+            return null;
+        }
+
+        try {
+            final String decoded = new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8);
+            final String[] parts = decoded.split("\\|", 2);
+            if (parts.length != 2) {
+                throw new IllegalArgumentException();
+            }
+
+            return new PostCursor(LocalDateTime.parse(parts[0]), parts[1]);
+        } catch (IllegalArgumentException exception) {
+            throw new ApiException(ErrorType.INVALID_REQUEST);
+        }
+    }
+
+    private boolean isAfterCursor(
+            final Post post,
+            final PostCursor cursor
+    ) {
+        if (cursor == null) {
+            return true;
+        }
+
+        if (post.getCreatedAt().isBefore(cursor.createdAt())) {
+            return true;
+        }
+
+        if (post.getCreatedAt().isEqual(cursor.createdAt())) {
+            return post.id().compareTo(cursor.postId()) < 0;
+        }
+
+        return false;
+    }
+
+    private String encodeCursor(final Post post) {
+        final String value = post.getCreatedAt() + "|" + post.id();
+        return Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private record PostCursor(
+            LocalDateTime createdAt,
+            String postId
+    ) {
     }
 }

@@ -9,7 +9,10 @@ public record PostResponse(
         String nickname,
         String title,
         String content,
-        String imageUrl
+        String imageUrl,
+        long likeCount,
+        long commentCount,
+        long viewCount
 ) {
 
     public static PostResponse from(
@@ -22,7 +25,10 @@ public record PostResponse(
                 user.nickname(),
                 post.title(),
                 post.content(),
-                post.imageUrl()
+                post.imageUrl(),
+                post.likeCount(),
+                post.commentCount(),
+                post.viewCount()
         );
     }
 }
