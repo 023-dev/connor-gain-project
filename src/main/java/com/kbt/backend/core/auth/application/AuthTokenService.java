@@ -2,7 +2,7 @@ package com.kbt.backend.core.auth.application;
 
 import com.kbt.backend.common.exception.ApiException;
 import com.kbt.backend.common.exception.ErrorType;
-import com.kbt.backend.core.auth.application.dto.AuthTokenResult;
+import com.kbt.backend.core.auth.application.dto.AuthToken;
 import com.kbt.backend.core.auth.domain.RefreshToken;
 import com.kbt.backend.core.auth.infrastructure.JwtProvider;
 import com.kbt.backend.core.auth.infrastructure.JwtTokenPayload;
@@ -19,13 +19,13 @@ public class AuthTokenService {
     private final JwtProvider jwtProvider;
     private final TokenRepository tokenRepository;
 
-    public AuthTokenResult issue(final String userId) {
+    public AuthToken issue(final String userId) {
         final String accessToken = jwtProvider.createAccessToken(userId);
         final String refreshToken = jwtProvider.createRefreshToken(userId);
         final JwtTokenPayload refreshPayload = jwtProvider.parseRefreshTokenPayload(refreshToken);
 
         tokenRepository.saveRefreshToken(new RefreshToken(userId, refreshToken, refreshPayload.expiresAt()));
-        return new AuthTokenResult(accessToken, refreshToken);
+        return new AuthToken(accessToken, refreshToken);
     }
 
     public String parseAccessToken(final String token) {
@@ -43,7 +43,7 @@ public class AuthTokenService {
         return jwtProvider.parseRefreshTokenPayload(token).userId();
     }
 
-    public AuthTokenResult reissueRefreshToken(
+    public AuthToken reissueRefreshToken(
             final String refreshToken,
             final String userId
     ) {

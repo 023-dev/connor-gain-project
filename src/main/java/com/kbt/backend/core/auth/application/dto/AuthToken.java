@@ -1,6 +1,6 @@
 package com.kbt.backend.core.auth.application.dto;
 
-public record AuthTokenResult(
+public record AuthToken(
         String accessToken,
         String refreshToken
 ) {

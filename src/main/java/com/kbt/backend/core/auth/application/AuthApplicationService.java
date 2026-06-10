@@ -3,7 +3,7 @@ package com.kbt.backend.core.auth.application;
 import com.kbt.backend.common.exception.ApiException;
 import com.kbt.backend.common.exception.ErrorType;
 import com.kbt.backend.core.auth.application.dto.AuthReissueResult;
-import com.kbt.backend.core.auth.application.dto.AuthTokenResult;
+import com.kbt.backend.core.auth.application.dto.AuthToken;
 import com.kbt.backend.core.auth.application.dto.AuthLoginResult;
 import com.kbt.backend.core.user.application.UserCommandService;
 import com.kbt.backend.core.user.application.UserQueryService;
@@ -22,13 +22,13 @@ public class AuthApplicationService {
 
     public AuthLoginResult login(final String email, final String password) {
         final User user = userCommandService.signin(email, password);
-        final AuthTokenResult tokenResult = authTokenService.issue(user.id());
+        final AuthToken token = authTokenService.issue(user.id());
         return new AuthLoginResult(
                 user.id(),
                 user.nickname(),
                 user.profileImage(),
-                tokenResult.accessToken(),
-                tokenResult.refreshToken()
+                token.accessToken(),
+                token.refreshToken()
         );
     }
 
@@ -46,7 +46,7 @@ public class AuthApplicationService {
         final String userId = authTokenService.parseRefreshToken(refreshToken);
         userQueryService.findActiveUser(userId);
 
-        final AuthTokenResult tokenResult = authTokenService.reissueRefreshToken(refreshToken, userId);
+        final AuthToken tokenResult = authTokenService.reissueRefreshToken(refreshToken, userId);
         return new AuthReissueResult(tokenResult.accessToken(), tokenResult.refreshToken());
     }
 }
