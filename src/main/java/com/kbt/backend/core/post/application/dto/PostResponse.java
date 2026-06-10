@@ -2,6 +2,7 @@ package com.kbt.backend.core.post.application.dto;
 
 import com.kbt.backend.core.post.domain.Post;
 import com.kbt.backend.core.user.domain.User;
+import java.time.LocalDateTime;
 
 public record PostResponse(
         String postId,
@@ -13,7 +14,8 @@ public record PostResponse(
         long likeCount,
         long commentCount,
         long viewCount,
-        boolean isLiked
+        boolean isLiked,
+        LocalDateTime createdAt
 ) {
 
     public static PostResponse from(
@@ -31,7 +33,8 @@ public record PostResponse(
                 post.likeCount(),
                 post.commentCount(),
                 post.viewCount(),
-                isLiked
+                isLiked,
+                post.getCreatedAt()
         );
     }
 }
