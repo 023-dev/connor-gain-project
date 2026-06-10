@@ -16,6 +16,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
+import java.util.List;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -26,8 +28,17 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(errorCode.message()));
     }
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(final MethodArgumentNotValidException exception) {
+        final List<ErrorResponse.FieldError> errors = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> new ErrorResponse.FieldError(error.getField(), error.getDefaultMessage()))
+                .toList();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(ErrorType.INVALID_REQUEST.message(), errors));
+    }
+
     @ExceptionHandler({
-            MethodArgumentNotValidException.class,
             ConstraintViolationException.class,
             HttpMessageNotReadableException.class,
             MissingServletRequestParameterException.class,

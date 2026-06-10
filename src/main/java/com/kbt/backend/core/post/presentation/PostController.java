@@ -90,6 +90,6 @@ public class PostController {
             @PathVariable final String postId
     ) {
         postService.delete(userId, postId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

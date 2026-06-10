@@ -1,6 +1,6 @@
-package com.kbt.backend.core.user.application.dto;
+package com.kbt.backend.core.auth.application.dto;
 
-public record UserSigninResponse(
+public record AuthLoginResponse(
         String userId,
         String nickname,
         String profileImage,

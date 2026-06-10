@@ -76,6 +76,6 @@ public class CommentController {
             @PathVariable final String commentId
     ) {
         commentService.delete(userId, postId, commentId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

@@ -6,12 +6,9 @@ import com.kbt.backend.core.auth.presentation.RefreshTokenCookie;
 import com.kbt.backend.core.auth.presentation.UserId;
 import com.kbt.backend.core.user.application.UserApplicationService;
 import com.kbt.backend.core.user.application.dto.UserMeResponse;
-import com.kbt.backend.core.user.application.dto.UserSigninResult;
-import com.kbt.backend.core.user.application.dto.UserSigninResponse;
 import com.kbt.backend.core.user.application.dto.UserSignupResponse;
 import com.kbt.backend.core.user.application.dto.UserUpdateResponse;
 import com.kbt.backend.core.user.presentation.dto.UserPasswordUpdateRequest;
-import com.kbt.backend.core.user.presentation.dto.UserSigninRequest;
 import com.kbt.backend.core.user.presentation.dto.UserSignupRequest;
 import com.kbt.backend.core.user.presentation.dto.UserUpdateRequest;
 import jakarta.validation.Valid;
@@ -49,28 +46,6 @@ public class UserController {
                 ));
     }
 
-    @PostMapping("/signin")
-    public ResponseEntity<UserSigninResponse> signin(
-            @Valid @RequestBody final UserSigninRequest request
-    ) {
-        final UserSigninResult result = userService.signin(request.email(), request.password());
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, RefreshTokenCookie.create(result.refreshToken()).toString())
-                .body(result.toResponse());
-    }
-
-    @PostMapping("/signout")
-    @Authenticated
-    public ResponseEntity<Void> signout(
-            @UserId final String userId,
-            @AccessToken final String accessToken
-    ) {
-        userService.signout(userId, accessToken);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, RefreshTokenCookie.expire().toString())
-                .build();
-    }
-
     @GetMapping("/me")
     @Authenticated
     public ResponseEntity<UserMeResponse> me(
@@ -86,7 +61,7 @@ public class UserController {
             @AccessToken final String accessToken
     ) {
         userService.delete(userId, accessToken);
-        return ResponseEntity.ok()
+        return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, RefreshTokenCookie.expire().toString())
                 .build();
     }
@@ -106,7 +81,7 @@ public class UserController {
             @UserId final String userId,
             @Valid @RequestBody final UserPasswordUpdateRequest request
     ) {
-        userService.updatePassword(userId, request.newPassword());
-        return ResponseEntity.ok().build();
+        userService.updatePassword(userId, request.currentPassword(), request.newPassword());
+        return ResponseEntity.noContent().build();
     }
 }

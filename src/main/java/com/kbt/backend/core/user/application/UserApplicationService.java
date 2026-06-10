@@ -3,9 +3,7 @@ package com.kbt.backend.core.user.application;
 import com.kbt.backend.common.exception.ApiException;
 import com.kbt.backend.common.exception.ErrorType;
 import com.kbt.backend.core.auth.application.AuthTokenService;
-import com.kbt.backend.core.auth.application.dto.AuthTokenResult;
 import com.kbt.backend.core.user.application.dto.UserMeResponse;
-import com.kbt.backend.core.user.application.dto.UserSigninResult;
 import com.kbt.backend.core.user.application.dto.UserSignupResponse;
 import com.kbt.backend.core.user.application.dto.UserUpdateResponse;
 import com.kbt.backend.core.user.domain.User;
@@ -31,30 +29,6 @@ public class UserApplicationService {
         return new UserSignupResponse(user.id());
     }
 
-    public UserSigninResult signin(
-            final String email,
-            final String password
-    ) {
-        final User user = userCommandService.signin(email, password);
-        final AuthTokenResult tokenResult = authTokenService.issue(user.id());
-        return new UserSigninResult(
-                user.id(),
-                user.nickname(),
-                user.profileImage(),
-                tokenResult.accessToken(),
-                tokenResult.refreshToken()
-        );
-    }
-
-    public void signout(
-            final String userId,
-            final String accessToken
-    ) {
-        userCommandService.signout(userId);
-        authTokenService.revokeAccessToken(accessToken);
-        authTokenService.revokeRefreshTokens(userId);
-    }
-
     public UserMeResponse me(final String userId) {
         final User user = userQueryService.me(userId);
         return new UserMeResponse(user.id(), user.email(), user.nickname(), user.profileImage());
@@ -74,9 +48,10 @@ public class UserApplicationService {
 
     public void updatePassword(
             final String userId,
+            final String currentPassword,
             final String newPassword
     ) {
-        userCommandService.updatePassword(userId, newPassword);
+        userCommandService.updatePassword(userId, currentPassword, newPassword);
     }
 
     public void delete(final String userId) {

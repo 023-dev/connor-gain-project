@@ -70,9 +70,13 @@ public class UserCommandService {
 
     public void updatePassword(
             final String userId,
+            final String currentPassword,
             final String newPassword
     ) {
         final User user = findActiveUser(userId);
+        if (!user.password().equals(currentPassword)) {
+            throw new ApiException(ErrorType.INVALID_CREDENTIALS);
+        }
         user.updatePassword(newPassword);
         userRepository.save(user);
     }

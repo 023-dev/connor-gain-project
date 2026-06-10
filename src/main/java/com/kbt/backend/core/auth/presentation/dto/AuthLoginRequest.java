@@ -1,9 +1,9 @@
-package com.kbt.backend.core.user.presentation.dto;
+package com.kbt.backend.core.auth.presentation.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public record UserSigninRequest(
+public record AuthLoginRequest(
         @NotBlank
         @Email
         String email,
