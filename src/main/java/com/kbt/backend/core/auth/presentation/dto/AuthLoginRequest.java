@@ -2,6 +2,7 @@ package com.kbt.backend.core.auth.presentation.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public record AuthLoginRequest(
         @NotBlank
@@ -9,6 +10,7 @@ public record AuthLoginRequest(
         String email,
 
         @NotBlank
+        @Size(max = 128)
         String password
 ) {
 }
