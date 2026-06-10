@@ -71,7 +71,7 @@ public class InitialDataLoader implements ApplicationRunner {
         try (final InputStream inputStream = resource.getInputStream()) {
             return objectMapper.readValue(inputStream, seedListType);
         } catch (IOException exception) {
-            throw new IllegalStateException("Failed to load seed data: " + seedPath, exception);
+            throw new IllegalStateException("데이터를 초기화하는 과정이 실패했습니다." + seedPath, exception);
         }
     }
 }
