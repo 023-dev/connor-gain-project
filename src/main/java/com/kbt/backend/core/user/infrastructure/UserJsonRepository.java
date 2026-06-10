@@ -23,18 +23,18 @@ public class UserJsonRepository implements UserRepository {
     }
 
     @Override
-    public Optional<User> findById(final String id) {
+    public synchronized Optional<User> findById(final String id) {
         return Optional.ofNullable(users.get(id));
     }
 
     @Override
-    public Optional<User> findActiveById(final String id) {
+    public synchronized Optional<User> findActiveById(final String id) {
         return findById(id)
                 .filter(this::isActive);
     }
 
     @Override
-    public Optional<User> findActiveByEmail(final String email) {
+    public synchronized Optional<User> findActiveByEmail(final String email) {
         return users.values().stream()
                 .filter(user -> user.email().equals(email))
                 .filter(this::isActive)
@@ -42,7 +42,7 @@ public class UserJsonRepository implements UserRepository {
     }
 
     @Override
-    public Optional<User> findActiveByNickname(final String nickname) {
+    public synchronized Optional<User> findActiveByNickname(final String nickname) {
         return users.values().stream()
                 .filter(user -> user.nickname().equals(nickname))
                 .filter(this::isActive)
