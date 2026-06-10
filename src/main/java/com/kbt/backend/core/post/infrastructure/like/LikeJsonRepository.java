@@ -39,6 +39,14 @@ public class LikeJsonRepository implements LikeRepository {
     }
 
     @Override
+    public boolean existsActiveByPostIdAndUserId(
+            final String postId,
+            final String userId
+    ) {
+        return findActiveByPostIdAndUserId(postId, userId).isPresent();
+    }
+
+    @Override
     public long countActiveByPostId(final String postId) {
         return likes.values().stream()
                 .filter(this::isActive)

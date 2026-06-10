@@ -11,6 +11,8 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import java.util.Optional;
+
 @Component
 public class UserIdArgumentResolver implements HandlerMethodArgumentResolver {
 
@@ -19,7 +21,7 @@ public class UserIdArgumentResolver implements HandlerMethodArgumentResolver {
             final MethodParameter parameter
     ) {
         return parameter.hasParameterAnnotation(UserId.class)
-                && parameter.getParameterType().equals(String.class);
+                && (parameter.getParameterType().equals(String.class) || parameter.getParameterType().equals(Optional.class));
     }
 
     @Override
@@ -31,6 +33,11 @@ public class UserIdArgumentResolver implements HandlerMethodArgumentResolver {
     ) {
         final HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
         final Object userId = request.getAttribute(AuthenticationInterceptor.AUTH_USER_ID);
+        
+        if (parameter.getParameterType().equals(Optional.class)) {
+            return Optional.ofNullable(userId);
+        }
+
         if (userId == null) {
             throw new ApiException(ErrorType.UNAUTHORIZED);
         }

@@ -17,5 +17,10 @@ public interface LikeRepository {
             final String userId
     );
 
+    boolean existsActiveByPostIdAndUserId(
+            final String postId,
+            final String userId
+    );
+
     long countActiveByPostId(final String postId);
 }

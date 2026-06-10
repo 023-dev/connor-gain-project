@@ -12,12 +12,14 @@ public record PostResponse(
         String imageUrl,
         long likeCount,
         long commentCount,
-        long viewCount
+        long viewCount,
+        boolean isLiked
 ) {
 
     public static PostResponse from(
             final Post post,
-            final User user
+            final User user,
+            final boolean isLiked
     ) {
         return new PostResponse(
                 post.id(),
@@ -28,7 +30,8 @@ public record PostResponse(
                 post.imageUrl(),
                 post.likeCount(),
                 post.commentCount(),
-                post.viewCount()
+                post.viewCount(),
+                isLiked
         );
     }
 }

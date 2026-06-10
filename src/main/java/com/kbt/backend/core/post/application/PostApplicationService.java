@@ -6,27 +6,24 @@ import com.kbt.backend.core.post.application.dto.PostCreateResponse;
 import com.kbt.backend.core.post.application.dto.PostResponse;
 import com.kbt.backend.core.post.application.dto.PostsResponse;
 import com.kbt.backend.core.post.application.dto.PostUpdateResponse;
+import com.kbt.backend.core.post.application.like.LikeQueryService;
+import com.kbt.backend.common.domain.CursorPage;
 import com.kbt.backend.core.post.domain.Post;
 import com.kbt.backend.core.user.application.UserQueryService;
 import com.kbt.backend.core.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class PostApplicationService {
 
-    private static final int DEFAULT_PAGE_SIZE = 10;
-    private static final int MAX_PAGE_SIZE = 20;
-
     private final PostCommandService postCommandService;
     private final PostQueryService postQueryService;
+    private final LikeQueryService likeQueryService;
     private final UserQueryService userQueryService;
 
     public PostCreateResponse create(
@@ -41,34 +38,32 @@ public class PostApplicationService {
         return new PostCreateResponse(post.id());
     }
 
-    public PostResponse findOne(final String postId) {
+    public PostResponse findOne(
+            final Optional<String> userId,
+            final String postId
+    ) {
         final Post post = postQueryService.findOne(postId);
         final User user = userQueryService.findActiveUser(post.userId());
         final Post viewedPost = postCommandService.increaseViewCount(post);
-        return PostResponse.from(viewedPost, user);
+        return PostResponse.from(viewedPost, user, likeQueryService.isLikedByUser(post.id(), userId));
     }
 
     public PostsResponse findAll(
+            final Optional<String> userId,
             final String cursor,
-            final Integer size
+            final int size
     ) {
-        final int pageSize = resolvePageSize(size);
-        final PostCursor pageCursor = parseCursor(cursor);
+        final CursorPage<Post> page = postQueryService.findAll(cursor, size);
 
-        final List<Post> pagePosts = postQueryService.findAll().stream()
-                .filter(post -> isAfterCursor(post, pageCursor))
-                .limit(pageSize + 1L)
+        final List<PostResponse> posts = page.items().stream()
+                .map(post -> PostResponse.from(
+                        post,
+                        userQueryService.findActiveUser(post.userId()),
+                        likeQueryService.isLikedByUser(post.id(), userId)
+                ))
                 .toList();
 
-        final boolean hasNext = pagePosts.size() > pageSize;
-        final List<Post> visiblePosts = hasNext ? pagePosts.subList(0, pageSize) : pagePosts;
-        final String nextCursor = hasNext ? encodeCursor(visiblePosts.getLast()) : null;
-
-        final List<PostResponse> posts = visiblePosts.stream()
-                .map(post -> PostResponse.from(post, userQueryService.findActiveUser(post.userId())))
-                .toList();
-
-        return new PostsResponse(posts, nextCursor, hasNext);
+        return new PostsResponse(posts, page.nextCursor(), page.hasNext());
     }
 
     public PostUpdateResponse edit(
@@ -105,63 +100,5 @@ public class PostApplicationService {
         if (!StringUtils.hasText(title) && !StringUtils.hasText(content) && !StringUtils.hasText(imageUrl)) {
             throw new ApiException(ErrorType.INVALID_REQUEST);
         }
-    }
-
-    private int resolvePageSize(final Integer size) {
-        final int resolvedSize = size == null ? DEFAULT_PAGE_SIZE : size;
-        if (resolvedSize < 1 || resolvedSize > MAX_PAGE_SIZE) {
-            throw new ApiException(ErrorType.INVALID_REQUEST);
-        }
-        return resolvedSize;
-    }
-
-    private PostCursor parseCursor(final String cursor) {
-        if (!StringUtils.hasText(cursor)) {
-            return null;
-        }
-
-        try {
-            final String decoded = new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8);
-            final String[] parts = decoded.split("\\|", 2);
-            if (parts.length != 2) {
-                throw new IllegalArgumentException();
-            }
-
-            return new PostCursor(LocalDateTime.parse(parts[0]), parts[1]);
-        } catch (IllegalArgumentException exception) {
-            throw new ApiException(ErrorType.INVALID_REQUEST);
-        }
-    }
-
-    private boolean isAfterCursor(
-            final Post post,
-            final PostCursor cursor
-    ) {
-        if (cursor == null) {
-            return true;
-        }
-
-        if (post.getCreatedAt().isBefore(cursor.createdAt())) {
-            return true;
-        }
-
-        if (post.getCreatedAt().isEqual(cursor.createdAt())) {
-            return post.id().compareTo(cursor.postId()) < 0;
-        }
-
-        return false;
-    }
-
-    private String encodeCursor(final Post post) {
-        final String value = post.getCreatedAt() + "|" + post.id();
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(value.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private record PostCursor(
-            LocalDateTime createdAt,
-            String postId
-    ) {
     }
 }

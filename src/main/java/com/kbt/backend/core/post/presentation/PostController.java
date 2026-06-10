@@ -2,6 +2,7 @@ package com.kbt.backend.core.post.presentation;
 
 import com.kbt.backend.core.auth.presentation.Authenticated;
 import com.kbt.backend.core.auth.presentation.UserId;
+import java.util.Optional;
 import com.kbt.backend.core.post.application.PostApplicationService;
 import com.kbt.backend.core.post.application.dto.PostCreateResponse;
 import com.kbt.backend.core.post.application.dto.PostResponse;
@@ -9,6 +10,8 @@ import com.kbt.backend.core.post.application.dto.PostsResponse;
 import com.kbt.backend.core.post.application.dto.PostUpdateResponse;
 import com.kbt.backend.core.post.presentation.dto.PostCreateRequest;
 import com.kbt.backend.core.post.presentation.dto.PostUpdateRequest;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -49,17 +52,19 @@ public class PostController {
 
     @GetMapping("/{postId}")
     public ResponseEntity<PostResponse> findOne(
+            @UserId final Optional<String> userId,
             @PathVariable final String postId
     ) {
-        return ResponseEntity.ok(postService.findOne(postId));
+        return ResponseEntity.ok(postService.findOne(userId, postId));
     }
 
     @GetMapping
     public ResponseEntity<PostsResponse> findAll(
+            @UserId final Optional<String> userId,
             @RequestParam(required = false) final String cursor,
-            @RequestParam(required = false) final Integer size
+            @RequestParam(required = false, defaultValue = "10") @Min(1) @Max(value = 20) final int size
     ) {
-        return ResponseEntity.ok(postService.findAll(cursor, size));
+        return ResponseEntity.ok(postService.findAll(userId, cursor, size));
     }
 
     @PatchMapping("/{postId}")

@@ -11,4 +11,6 @@ public interface PostRepository {
     Optional<Post> findActiveById(final String id);
 
     List<Post> findAllActive();
+
+    List<Post> findAllActiveByCursor(final List<String> cursorValues, final int limit);
 }

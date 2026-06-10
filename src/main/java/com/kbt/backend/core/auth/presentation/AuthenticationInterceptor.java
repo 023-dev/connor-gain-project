@@ -32,23 +32,22 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        if (!handlerMethod.hasMethodAnnotation(Authenticated.class)) {
-            return true;
-        }
-
         final String authorizationHeader = request.getHeader(AUTHORIZATION);
 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            throw new ApiException(ErrorType.UNAUTHORIZED);
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            final String token = authorizationHeader.substring("Bearer ".length());
+            if (StringUtils.hasText(token)) {
+                request.setAttribute(AUTH_USER_ID, authTokenService.parseAccessToken(token));
+                request.setAttribute(AUTH_ACCESS_TOKEN, token);
+            }
         }
 
-        final String token = authorizationHeader.substring("Bearer ".length());
-        if (!StringUtils.hasText(token)) {
-            throw new ApiException(ErrorType.UNAUTHORIZED);
+        if (handlerMethod.hasMethodAnnotation(Authenticated.class)) {
+            if (request.getAttribute(AUTH_USER_ID) == null) {
+                throw new ApiException(ErrorType.UNAUTHORIZED);
+            }
         }
 
-        request.setAttribute(AUTH_USER_ID, authTokenService.parseAccessToken(token));
-        request.setAttribute(AUTH_ACCESS_TOKEN, token);
         return true;
     }
 }
