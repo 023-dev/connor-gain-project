@@ -8,6 +8,8 @@ spring:
 
 jwt:
   secret-key: local-development-secret-key-1234567890
+  access-token-validity: 30m
+  refresh-token-validity: 14d
 
 storage:
   upload-dir: uploads

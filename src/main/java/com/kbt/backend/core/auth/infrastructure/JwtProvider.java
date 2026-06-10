@@ -19,24 +19,30 @@ import java.util.UUID;
 @Component
 public class JwtProvider {
 
-    private static final Duration ACCESS_TOKEN_VALIDITY = Duration.ofMinutes(30);
-    private static final Duration REFRESH_TOKEN_VALIDITY = Duration.ofDays(14);
     private static final String TOKEN_TYPE = "token_type";
     private static final String ACCESS = "access";
     private static final String REFRESH = "refresh";
 
     private final SecretKey secretKey;
+    private final Duration accessTokenValidity;
+    private final Duration refreshTokenValidity;
 
-    public JwtProvider(@Value("${jwt.secret-key}") final String secretKeyString) {
+    public JwtProvider(
+            @Value("${jwt.secret-key}") final String secretKeyString,
+            @Value("${jwt.access-token-validity}") final Duration accessTokenValidity,
+            @Value("${jwt.refresh-token-validity}") final Duration refreshTokenValidity
+    ) {
         this.secretKey = Keys.hmacShaKeyFor(secretKeyString.getBytes(StandardCharsets.UTF_8));
+        this.accessTokenValidity = accessTokenValidity;
+        this.refreshTokenValidity = refreshTokenValidity;
     }
 
     public String createAccessToken(final String userId) {
-        return createToken(userId, ACCESS, ACCESS_TOKEN_VALIDITY);
+        return createToken(userId, ACCESS, accessTokenValidity);
     }
 
     public String createRefreshToken(final String userId) {
-        return createToken(userId, REFRESH, REFRESH_TOKEN_VALIDITY);
+        return createToken(userId, REFRESH, refreshTokenValidity);
     }
 
     public JwtTokenPayload parseAccessTokenPayload(final String token) {
