@@ -30,10 +30,11 @@ public class LikeController {
 
     @DeleteMapping
     @Authenticated
-    public ResponseEntity<LikeResponse> unlike(
+    public ResponseEntity<Void> unlike(
             @UserId final String userId,
             @PathVariable final String postId
     ) {
-        return ResponseEntity.ok(likeService.unlike(userId, postId));
+        likeService.unlike(userId, postId);
+        return ResponseEntity.noContent().build();
     }
 }
