@@ -2,6 +2,7 @@ package com.kbt.backend.common.exception;
 
 import com.kbt.backend.common.response.ErrorResponse;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -16,26 +17,25 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
-import java.util.List;
-
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(final ApiException exception) {
-        final ErrorType errorCode = exception.errorCode();
-        return ResponseEntity.status(errorCode.status())
-                .body(new ErrorResponse(errorCode.message()));
+        final ErrorType errorType = exception.errorCode();
+        return ResponseEntity.status(errorType.status())
+                .body(new ErrorResponse(errorType));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(final MethodArgumentNotValidException exception) {
-        final List<ErrorResponse.FieldError> errors = exception.getBindingResult().getFieldErrors().stream()
-                .map(error -> new ErrorResponse.FieldError(error.getField(), error.getDefaultMessage()))
-                .toList();
+        final String message = exception.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .orElse(ErrorType.INVALID_REQUEST.message());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(ErrorType.INVALID_REQUEST.message(), errors));
+                .body(new ErrorResponse(ErrorType.INVALID_REQUEST.name(), message));
     }
 
     @ExceptionHandler({
@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(final RuntimeException exception) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(exception.getMessage()));
+                .body(new ErrorResponse(ErrorType.INVALID_REQUEST.name(), exception.getMessage()));
     }
 
     @ExceptionHandler({
@@ -59,18 +59,18 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<ErrorResponse> handleInvalidRequest() {
         return ResponseEntity.status(ErrorType.INVALID_REQUEST.status())
-                .body(new ErrorResponse(ErrorType.INVALID_REQUEST.message()));
+                .body(new ErrorResponse(ErrorType.INVALID_REQUEST));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleFileTooLarge() {
         return ResponseEntity.status(ErrorType.FILE_TOO_LARGE.status())
-                .body(new ErrorResponse(ErrorType.FILE_TOO_LARGE.message()));
+                .body(new ErrorResponse(ErrorType.FILE_TOO_LARGE));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException() {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(ErrorType.INTERNAL_SERVER_ERROR.message()));
+                .body(new ErrorResponse(ErrorType.INTERNAL_SERVER_ERROR));
     }
 }

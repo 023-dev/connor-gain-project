@@ -1,17 +1,12 @@
 package com.kbt.backend.common.response;
 
-import java.util.List;
+import com.kbt.backend.common.exception.ErrorType;
 
 public record ErrorResponse(
-        String message,
-        List<FieldError> errors
+        String code,
+        String message
 ) {
-    public ErrorResponse(String message) {
-        this(message, List.of());
+    public ErrorResponse(ErrorType errorType) {
+        this(errorType.name(), errorType.message());
     }
-
-    public record FieldError(
-            String field,
-            String reason
-    ) {}
 }
