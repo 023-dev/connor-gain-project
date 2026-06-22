@@ -18,8 +18,11 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CommentApplicationService {
 
     private final CommentCommandService commentCommandService;
@@ -49,7 +52,7 @@ public class CommentApplicationService {
         final Comment comment = commentQueryService.findOne(commentId);
         validateBelongsToPost(comment, postId);
 
-        final User user = userQueryService.findActiveUser(comment.userId());
+        final User user = userQueryService.findUser(comment.userId());
         return CommentResponse.from(comment, user);
     }
 
@@ -57,7 +60,7 @@ public class CommentApplicationService {
         postQueryService.findOne(postId);
 
         final List<CommentResponse> comments = commentQueryService.findAllByPostId(postId).stream()
-                .map(comment -> CommentResponse.from(comment, userQueryService.findActiveUser(comment.userId())))
+                .map(comment -> CommentResponse.from(comment, userQueryService.findUser(comment.userId())))
                 .toList();
 
         return new CommentsResponse(comments);

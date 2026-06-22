@@ -18,6 +18,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import com.kbt.backend.core.post.domain.Post;
+import com.kbt.backend.core.post.domain.PostStat;
+import com.kbt.backend.core.user.domain.User;
+
 @Component
 @RequiredArgsConstructor
 public class InitialDataLoader implements ApplicationRunner {
@@ -46,14 +50,51 @@ public class InitialDataLoader implements ApplicationRunner {
 
     private void loadPostSeedDataIntoRepository() {
         readJsonSeedData(POST_SEED_PATH, PostSeedData.class).stream()
-                .map(PostSeedData::toPost)
-                .forEach(postRepository::save);
+                .forEach(seed -> {
+                    final User user = userRepository.findByKeyAndDeletedFalse(seed.userId())
+                            .orElseThrow(() -> new IllegalStateException("User not found for seed post: " + seed.userId()));
+
+                    final Post post = Post.builder()
+                            .id(seed.id())
+                            .userId(seed.userId())
+                            .title(seed.title())
+                            .content(seed.content())
+                            .imageUrl(seed.imageUrl())
+                            .likeCount(0L)
+                            .commentCount(0L)
+                            .viewCount(0L)
+                            .deleted(seed.deleted())
+                            .build();
+
+                    final Long nextPostId = postRepository.findMaxId().orElse(0L) + 1;
+                    post.assignId(nextPostId);
+                    post.assignUserId(user.idLong());
+                    final Post savedPost = postRepository.save(post);
+
+                    final Long nextStatId2 = postRepository.findMaxPostStatId2().orElse(0L) + 1;
+                    final PostStat stat = PostStat.builder()
+                            .postId(savedPost.idLong())
+                            .id2(nextStatId2)
+                            .likeCount(0L)
+                            .commentCount(0L)
+                            .viewCount(0L)
+                            .build();
+
+                    savedPost.assignStat(stat);
+                    postRepository.save(savedPost);
+                });
     }
 
     private void loadCommentSeedDataIntoRepository() {
         readJsonSeedData(COMMENT_SEED_PATH, CommentSeedData.class).stream()
                 .map(CommentSeedData::toComment)
-                .forEach(commentRepository::save);
+                .forEach(comment -> {
+                    commentRepository.save(comment);
+                    postRepository.findActiveById(comment.postId())
+                            .ifPresent(post -> {
+                                postRepository.incrementCommentCount(post.idLong());
+                            });
+                });
     }
 
     private <T> List<T> readJsonSeedData(

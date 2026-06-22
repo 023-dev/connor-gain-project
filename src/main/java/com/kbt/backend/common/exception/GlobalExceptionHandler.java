@@ -38,13 +38,16 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ErrorType.INVALID_REQUEST.name(), message));
     }
 
-    @ExceptionHandler({
-            IllegalArgumentException.class,
-            IllegalStateException.class
-    })
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(final RuntimeException exception) {
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException() {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(ErrorType.INVALID_REQUEST.name(), exception.getMessage()));
+                .body(new ErrorResponse(ErrorType.INVALID_REQUEST));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalStateException() {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(ErrorType.INTERNAL_SERVER_ERROR));
     }
 
     @ExceptionHandler({

@@ -18,7 +18,12 @@ public class UserQueryService {
     }
 
     public User findActiveUser(final String userId) {
-        return userRepository.findActiveById(userId)
+        return userRepository.findByKeyAndDeletedFalse(userId)
+                .orElseThrow(() -> new ApiException(ErrorType.USER_NOT_FOUND));
+    }
+
+    public User findUser(final String userId) {
+        return userRepository.findByKey(userId)
                 .orElseThrow(() -> new ApiException(ErrorType.USER_NOT_FOUND));
     }
 }

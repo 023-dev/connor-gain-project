@@ -5,15 +5,21 @@ import com.kbt.backend.common.exception.ErrorType;
 import com.kbt.backend.common.utils.UuidGenerator;
 import com.kbt.backend.core.post.domain.Post;
 import com.kbt.backend.core.post.domain.PostEditor;
+import com.kbt.backend.core.post.domain.PostStat;
 import com.kbt.backend.core.post.infrastructure.PostRepository;
+import com.kbt.backend.core.user.application.UserQueryService;
+import com.kbt.backend.core.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PostCommandService {
 
     private final PostRepository postRepository;
+    private final UserQueryService userQueryService;
 
     public Post create(
             final String userId,
@@ -21,6 +27,8 @@ public class PostCommandService {
             final String content,
             final String imageUrl
     ) {
+        final User user = userQueryService.findActiveUser(userId);
+
         final Post post = Post.builder()
                 .id(UuidGenerator.generate())
                 .userId(userId)
@@ -32,32 +40,49 @@ public class PostCommandService {
                 .viewCount(0L)
                 .build();
 
-        return postRepository.save(post);
+        final Long nextPostId = postRepository.findMaxId().orElse(0L) + 1;
+        post.assignId(nextPostId);
+        post.assignUserId(user.idLong());
+
+        final Post savedPost = postRepository.save(post);
+
+        final Long nextStatId2 = postRepository.findMaxPostStatId2().orElse(0L) + 1;
+        final PostStat stat = PostStat.builder()
+                .postId(savedPost.idLong())
+                .id2(nextStatId2)
+                .likeCount(0L)
+                .commentCount(0L)
+                .viewCount(0L)
+                .build();
+
+        savedPost.assignStat(stat);
+        return postRepository.save(savedPost);
     }
 
     public Post increaseLikeCount(final Post post) {
-        post.incrementLikeCount();
-        return postRepository.save(post);
+        postRepository.incrementLikeCount(post.idLong());
+        return postRepository.findActiveById(post.id())
+                .orElse(post);
     }
 
     public Post decreaseLikeCount(final Post post) {
-        post.decrementLikeCount();
-        return postRepository.save(post);
+        postRepository.decrementLikeCount(post.idLong());
+        return postRepository.findActiveById(post.id())
+                .orElse(post);
     }
 
     public void increaseCommentCount(final Post post) {
-        post.incrementCommentCount();
-        postRepository.save(post);
+        postRepository.incrementCommentCount(post.idLong());
     }
 
     public void decreaseCommentCount(final Post post) {
-        post.decrementCommentCount();
-        postRepository.save(post);
+        postRepository.decrementCommentCount(post.idLong());
     }
 
     public Post increaseViewCount(final Post post) {
-        post.incrementViewCount();
-        return postRepository.save(post);
+        postRepository.incrementViewCount(post.idLong());
+        return postRepository.findActiveById(post.id())
+                .orElse(post);
     }
 
     public Post edit(

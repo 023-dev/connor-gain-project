@@ -16,7 +16,7 @@ public class UserCommandService {
 
     private final UserRepository userRepository;
 
-    public User signup(
+    public synchronized User signup(
             final String email,
             final String password,
             final String nickname,
@@ -40,7 +40,7 @@ public class UserCommandService {
             final String email,
             final String password
     ) {
-        final User user = userRepository.findActiveByEmail(email)
+        final User user = userRepository.findByEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new ApiException(ErrorType.INVALID_CREDENTIALS));
 
         if (!user.password().equals(password)) {
@@ -92,21 +92,21 @@ public class UserCommandService {
     }
 
     private void validateDuplicateEmail(final String email) {
-        userRepository.findActiveByEmail(email)
+        userRepository.findByEmailAndDeletedFalse(email)
                 .ifPresent(user -> {
                     throw new ApiException(ErrorType.DUPLICATE_EMAIL);
                 });
     }
 
     private void validateDuplicateNickname(final String nickname) {
-        userRepository.findActiveByNickname(nickname)
+        userRepository.findByNicknameAndDeletedFalse(nickname)
                 .ifPresent(user -> {
                     throw new ApiException(ErrorType.DUPLICATE_NICKNAME);
                 });
     }
 
     private User findActiveUser(final String userId) {
-        return userRepository.findActiveById(userId)
+        return userRepository.findByKeyAndDeletedFalse(userId)
                 .orElseThrow(() -> new ApiException(ErrorType.USER_NOT_FOUND));
     }
 }

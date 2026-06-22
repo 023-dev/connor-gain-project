@@ -17,8 +17,11 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PostApplicationService {
 
     private final PostCommandService postCommandService;
@@ -43,7 +46,7 @@ public class PostApplicationService {
             final String postId
     ) {
         final Post post = postQueryService.findOne(postId);
-        final User user = userQueryService.findActiveUser(post.userId());
+        final User user = userQueryService.findUser(post.userId());
         final Post viewedPost = postCommandService.increaseViewCount(post);
         return PostResponse.from(viewedPost, user, likeQueryService.isLikedByUser(post.id(), userId));
     }
@@ -58,7 +61,7 @@ public class PostApplicationService {
         final List<PostResponse> posts = page.items().stream()
                 .map(post -> PostResponse.from(
                         post,
-                        userQueryService.findActiveUser(post.userId()),
+                        userQueryService.findUser(post.userId()),
                         likeQueryService.isLikedByUser(post.id(), userId)
                 ))
                 .toList();

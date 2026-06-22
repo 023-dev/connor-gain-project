@@ -1,0 +1,83 @@
+package com.kbt.backend.core.post.domain;
+
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+@Entity
+@Table(name = "post_stat")
+@IdClass(PostStatId.class)
+@Getter
+@Setter(AccessLevel.PRIVATE)
+@Accessors(fluent = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class PostStat {
+
+    @Id
+    @Column(name = "post_id")
+    private Long postId;
+
+    @Id
+    @Column(name = "id2")
+    private Long id2;
+
+    @Column(name = "like_count", nullable = false)
+    private long likeCount;
+
+    @Column(name = "comment_count", nullable = false)
+    private long commentCount;
+
+    @Column(name = "view_count", nullable = false)
+    private long viewCount;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private Post post;
+
+    @Builder
+    public PostStat(
+            final Long postId,
+            final Long id2,
+            final long likeCount,
+            final long commentCount,
+            final long viewCount
+    ) {
+        this.postId = postId;
+        this.id2 = id2;
+        this.likeCount = likeCount;
+        this.commentCount = commentCount;
+        this.viewCount = viewCount;
+    }
+
+    public void assignId2(final Long id2) {
+        this.id2 = id2;
+    }
+
+    public void incrementLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decrementLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
+
+    public void incrementCommentCount() {
+        this.commentCount++;
+    }
+
+    public void decrementCommentCount() {
+        if (this.commentCount > 0) {
+            this.commentCount--;
+        }
+    }
+
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+}

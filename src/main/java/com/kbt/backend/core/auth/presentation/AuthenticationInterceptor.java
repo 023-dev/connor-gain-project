@@ -37,8 +37,12 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             final String token = authorizationHeader.substring("Bearer ".length());
             if (StringUtils.hasText(token)) {
-                request.setAttribute(AUTH_USER_ID, authTokenService.parseAccessToken(token));
-                request.setAttribute(AUTH_ACCESS_TOKEN, token);
+                try {
+                    request.setAttribute(AUTH_USER_ID, authTokenService.parseAccessToken(token));
+                    request.setAttribute(AUTH_ACCESS_TOKEN, token);
+                } catch (Exception exception) {
+                    // Ignore exception for anonymous endpoints
+                }
             }
         }
 

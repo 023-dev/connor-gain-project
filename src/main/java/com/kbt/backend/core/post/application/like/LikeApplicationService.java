@@ -9,8 +9,11 @@ import com.kbt.backend.core.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class LikeApplicationService {
 
     private final LikeCommandService likeCommandService;

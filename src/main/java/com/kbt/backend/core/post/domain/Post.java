@@ -1,27 +1,53 @@
 package com.kbt.backend.core.post.domain;
 
 import com.kbt.backend.common.domain.BaseEntity;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import static com.kbt.backend.common.utils.Functions.update;
 
+@Entity
+@Table(name = "posts")
+@IdClass(PostId.class)
 @Getter
 @Setter(AccessLevel.PRIVATE)
 @Accessors(fluent = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Post extends BaseEntity {
-    private String id;
-    private String userId;
+
+    @Id
+    @Column(name = "id", unique = true)
+    private Long id;
+
+    @Id
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "external_id", columnDefinition = "char(36)", nullable = false, unique = true)
+    private String key;
+
+    @Column(name = "user_key", columnDefinition = "char(36)", nullable = false)
+    private String userKey;
+
+    @Column(nullable = false)
     private String title;
+
+    @Column(nullable = false, length = 2000)
     private String content;
+
+    @Column(name = "image_url")
     private String imageUrl;
-    private long likeCount;
-    private long commentCount;
-    private long viewCount;
+
+    @Column(nullable = false)
     private boolean deleted;
+
+    @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private PostStat stat;
 
     @Builder
     public Post(
@@ -35,15 +61,57 @@ public class Post extends BaseEntity {
             final long viewCount,
             final boolean deleted
     ) {
-        this.id = id;
-        this.userId = userId;
+        this.key = id != null ? id : java.util.UUID.randomUUID().toString();
+        this.userKey = userId;
         this.title = title;
         this.content = content;
         this.imageUrl = imageUrl;
-        this.likeCount = likeCount;
-        this.commentCount = commentCount;
-        this.viewCount = viewCount;
         this.deleted = deleted;
+        this.stat = null;
+    }
+
+    public String id() {
+        return this.key;
+    }
+
+    public String userId() {
+        return this.userKey;
+    }
+
+    public Long idLong() {
+        return this.id;
+    }
+
+    public Long userIdLong() {
+        return this.userId;
+    }
+
+    public void assignUserId(final Long userId) {
+        this.userId = userId;
+        if (this.stat != null) {
+            // Update postId in stat as well if post id is already present
+            // But we will typically assign stat after saving the post.
+        }
+    }
+
+    public void assignId(final Long id) {
+        this.id = id;
+    }
+
+    public void assignStat(final PostStat stat) {
+        this.stat = stat;
+    }
+
+    public long likeCount() {
+        return this.stat != null ? this.stat.likeCount() : 0L;
+    }
+
+    public long commentCount() {
+        return this.stat != null ? this.stat.commentCount() : 0L;
+    }
+
+    public long viewCount() {
+        return this.stat != null ? this.stat.viewCount() : 0L;
     }
 
     public PostEditor.PostEditorBuilder toEditor() {
@@ -66,31 +134,43 @@ public class Post extends BaseEntity {
     }
 
     public boolean isWrittenBy(final String userId) {
-        return this.userId.equals(userId);
+        return this.userKey.equals(userId);
     }
 
     public void incrementLikeCount() {
-        this.likeCount++;
+        ensureStatInitialized();
+        this.stat.incrementLikeCount();
     }
 
     public void decrementLikeCount() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
-        }
+        ensureStatInitialized();
+        this.stat.decrementLikeCount();
     }
 
     public void incrementCommentCount() {
-        this.commentCount++;
+        ensureStatInitialized();
+        this.stat.incrementCommentCount();
     }
 
     public void decrementCommentCount() {
-        if (this.commentCount > 0) {
-            this.commentCount--;
-        }
+        ensureStatInitialized();
+        this.stat.decrementCommentCount();
     }
 
     public void incrementViewCount() {
-        this.viewCount++;
+        ensureStatInitialized();
+        this.stat.incrementViewCount();
+    }
+
+    private void ensureStatInitialized() {
+        if (this.stat == null) {
+            this.stat = PostStat.builder()
+                    .postId(this.id)
+                    .likeCount(0)
+                    .commentCount(0)
+                    .viewCount(0)
+                    .build();
+        }
     }
 
     public void delete() {
