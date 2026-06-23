@@ -1,23 +1,55 @@
 package com.kbt.backend.core.post.domain.comment;
 
 import com.kbt.backend.common.domain.BaseEntity;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
+
 import static com.kbt.backend.common.utils.Functions.update;
 
+@Entity
+@Table(
+        name = "comments",
+        indexes = {
+                @Index(name = "idx_comments_post_id", columnList = "post_id")
+        }
+)
 @Getter
 @Setter(AccessLevel.PRIVATE)
 @Accessors(fluent = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Comment extends BaseEntity {
-    private String id;
-    private String postId;
-    private String userId;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "external_id", columnDefinition = "char(36)", nullable = false, unique = true)
+    private String key;
+
+    @Column(name = "post_id")
+    private Long postId;
+
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "post_key", columnDefinition = "char(36)", nullable = false)
+    private String postKey;
+
+    @Column(name = "user_key", columnDefinition = "char(36)", nullable = false)
+    private String userKey;
+
+    @Column(nullable = false, length = 2000)
     private String content;
-    private boolean deleted;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @Builder
     public Comment(
@@ -27,11 +59,44 @@ public class Comment extends BaseEntity {
             final String content,
             final boolean deleted
     ) {
-        this.id = id;
-        this.postId = postId;
-        this.userId = userId;
+        this.key = id != null ? id : java.util.UUID.randomUUID().toString();
+        this.postKey = postId;
+        this.userKey = userId;
         this.content = content;
-        this.deleted = deleted;
+        this.deletedAt = deleted ? LocalDateTime.now() : null;
+    }
+
+    public String id() {
+        return this.key;
+    }
+
+    public String postId() {
+        return this.postKey;
+    }
+
+    public String userId() {
+        return this.userKey;
+    }
+
+    public Long idLong() {
+        return this.id;
+    }
+
+    public Long postIdLong() {
+        return this.postId;
+    }
+
+    public Long userIdLong() {
+        return this.userId;
+    }
+
+    public boolean deleted() {
+        return this.deletedAt != null;
+    }
+
+    public void assignIds(final Long userId, final Long postId) {
+        this.userId = userId;
+        this.postId = postId;
     }
 
     public CommentEditor.CommentEditorBuilder toEditor() {
@@ -48,14 +113,14 @@ public class Comment extends BaseEntity {
     }
 
     public boolean isWrittenBy(final String userId) {
-        return this.userId.equals(userId);
+        return this.userKey.equals(userId);
     }
 
     public boolean belongsTo(final String postId) {
-        return this.postId.equals(postId);
+        return this.postKey.equals(postId);
     }
 
     public void delete() {
-        this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 }
