@@ -28,7 +28,7 @@ public interface PostRepository extends JpaRepository<Post, PostId> {
     @Query("select max(p.id) from Post p")
     Optional<Long> findMaxId();
 
-    @Query("select max(ps.id2) from PostStat ps")
+    @Query("select max(ps.userId) from PostStat ps")
     Optional<Long> findMaxPostStatId2();
 
     @Query("select p from Post p where p.deleted = false and " +
@@ -51,26 +51,26 @@ public interface PostRepository extends JpaRepository<Post, PostId> {
 
     @Modifying(clearAutomatically = true)
     @Transactional
-    @Query("update PostStat ps set ps.viewCount = ps.viewCount + 1 where ps.postId = :postId")
+    @Query("update PostStat ps set ps.viewCount = ps.viewCount + 1 where ps.id = :postId")
     void incrementViewCount(@Param("postId") Long postId);
 
     @Modifying(clearAutomatically = true)
     @Transactional
-    @Query("update PostStat ps set ps.likeCount = ps.likeCount + 1 where ps.postId = :postId")
+    @Query("update PostStat ps set ps.likeCount = ps.likeCount + 1 where ps.id = :postId")
     void incrementLikeCount(@Param("postId") Long postId);
 
     @Modifying(clearAutomatically = true)
     @Transactional
-    @Query("update PostStat ps set ps.likeCount = ps.likeCount - 1 where ps.postId = :postId and ps.likeCount > 0")
+    @Query("update PostStat ps set ps.likeCount = ps.likeCount - 1 where ps.id = :postId and ps.likeCount > 0")
     void decrementLikeCount(@Param("postId") Long postId);
 
     @Modifying(clearAutomatically = true)
     @Transactional
-    @Query("update PostStat ps set ps.commentCount = ps.commentCount + 1 where ps.postId = :postId")
+    @Query("update PostStat ps set ps.commentCount = ps.commentCount + 1 where ps.id = :postId")
     void incrementCommentCount(@Param("postId") Long postId);
 
     @Modifying(clearAutomatically = true)
     @Transactional
-    @Query("update PostStat ps set ps.commentCount = ps.commentCount - 1 where ps.postId = :postId and ps.commentCount > 0")
+    @Query("update PostStat ps set ps.commentCount = ps.commentCount - 1 where ps.id = :postId and ps.commentCount > 0")
     void decrementCommentCount(@Param("postId") Long postId);
 }

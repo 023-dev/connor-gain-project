@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 
 @Entity
 @Table(name = "post_stat")
-@IdClass(PostStatId.class)
+@IdClass(PostId.class)
 @Getter
 @Setter(AccessLevel.PRIVATE)
 @Accessors(fluent = true)
@@ -19,11 +19,11 @@ public class PostStat {
 
     @Id
     @Column(name = "post_id")
-    private Long postId;
+    private Long id;
 
     @Id
     @Column(name = "id2")
-    private Long id2;
+    private Long userId;
 
     @Column(name = "like_count", nullable = false)
     private long likeCount;
@@ -49,15 +49,15 @@ public class PostStat {
             final long commentCount,
             final long viewCount
     ) {
-        this.postId = postId;
-        this.id2 = id2;
+        this.id = postId;
+        this.userId = id2;
         this.likeCount = likeCount;
         this.commentCount = commentCount;
         this.viewCount = viewCount;
     }
 
     public void assignId2(final Long id2) {
-        this.id2 = id2;
+        this.userId = id2;
     }
 
     public void incrementLikeCount() {

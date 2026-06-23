@@ -5,19 +5,19 @@ import java.util.Objects;
 
 public class PostStatId implements Serializable {
 
-    private Long postId;
+    private Long id;
     private Long id2;
 
     public PostStatId() {
     }
 
-    public PostStatId(Long postId, Long id2) {
-        this.postId = postId;
+    public PostStatId(Long id, Long id2) {
+        this.id = id;
         this.id2 = id2;
     }
 
-    public Long getPostId() {
-        return postId;
+    public Long getId() {
+        return id;
     }
 
     public Long getId2() {
@@ -29,11 +29,11 @@ public class PostStatId implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PostStatId that = (PostStatId) o;
-        return Objects.equals(postId, that.postId) && Objects.equals(id2, that.id2);
+        return Objects.equals(id, that.id) && Objects.equals(id2, that.id2);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(postId, id2);
+        return Objects.hash(id, id2);
     }
 }

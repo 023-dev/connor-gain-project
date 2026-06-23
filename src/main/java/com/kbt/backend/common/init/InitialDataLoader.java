@@ -66,15 +66,12 @@ public class InitialDataLoader implements ApplicationRunner {
                             .deleted(seed.deleted())
                             .build();
 
-                    final Long nextPostId = postRepository.findMaxId().orElse(0L) + 1;
-                    post.assignId(nextPostId);
                     post.assignUserId(user.idLong());
                     final Post savedPost = postRepository.save(post);
 
-                    final Long nextStatId2 = postRepository.findMaxPostStatId2().orElse(0L) + 1;
                     final PostStat stat = PostStat.builder()
                             .postId(savedPost.idLong())
-                            .id2(nextStatId2)
+                            .id2(savedPost.userIdLong())
                             .likeCount(0L)
                             .commentCount(0L)
                             .viewCount(0L)
