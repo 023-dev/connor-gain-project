@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import static com.kbt.backend.common.utils.Functions.update;
+import static java.util.UUID.*;
 
 @Entity
 @Table(name = "users")
@@ -42,14 +43,14 @@ public class User extends BaseEntity {
 
     @Builder
     public User(
-            final String id, // 외부 UUID
+            final String key, // 외부 UUID
             final String email,
             final String password,
             final String nickname,
             final String profileImage,
             final boolean deleted
     ) {
-        this.key = id != null ? id : java.util.UUID.randomUUID().toString();
+        this.key = key != null ? key : randomUUID().toString();
         this.email = email;
         this.password = password;
         this.nickname = nickname;
@@ -62,9 +63,6 @@ public class User extends BaseEntity {
     }
 
     public String nickname() {
-        if (this.deleted) {
-            return "알 수 없음";
-        }
         return this.nickname;
     }
 
@@ -92,7 +90,11 @@ public class User extends BaseEntity {
         this.password = newPassword;
     }
 
-    public void delete() {
+    public void delete(final String dummyEmail) {
         this.deleted = true;
+        this.nickname = "알 수 없음";
+        this.email = dummyEmail;
+        this.password = "DELETED_USER_PASSWORD_HASH_" + java.util.UUID.randomUUID();
+        this.profileImage = null;
     }
 }

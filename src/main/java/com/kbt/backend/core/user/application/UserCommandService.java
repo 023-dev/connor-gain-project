@@ -3,18 +3,24 @@ package com.kbt.backend.core.user.application;
 import com.kbt.backend.common.exception.ApiException;
 import com.kbt.backend.common.exception.ErrorType;
 import com.kbt.backend.common.utils.UuidGenerator;
+import com.kbt.backend.core.user.domain.DeletedUser;
 import com.kbt.backend.core.user.domain.User;
 import com.kbt.backend.core.user.domain.UserEditor;
+import com.kbt.backend.core.user.infrastructure.DeletedUserRepository;
 import com.kbt.backend.core.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserCommandService {
 
     private final UserRepository userRepository;
+    private final DeletedUserRepository deletedUserRepository;
 
     public synchronized User signup(
             final String email,
@@ -26,7 +32,7 @@ public class UserCommandService {
         validateDuplicateNickname(nickname);
 
         final User user = User.builder()
-                .id(UuidGenerator.generate())
+                .key(UuidGenerator.generate())
                 .email(email)
                 .password(password)
                 .nickname(nickname)
@@ -87,7 +93,18 @@ public class UserCommandService {
 
     public void delete(final String userId) {
         final User user = findActiveUser(userId);
-        user.delete();
+
+        // 1. 탈퇴 유저 백업 정보 저장
+        final DeletedUser deletedUser = DeletedUser.builder()
+                .userKey(user.id())
+                .email(user.email())
+                .nickname(user.nickname())
+                .build();
+        deletedUserRepository.save(deletedUser);
+
+        // 2. 실서비스 테이블 유저 정보 마스킹/익명화 및 탈퇴 처리
+        final String dummyEmail = "deleted_" + UUID.randomUUID().toString() + "@kbt.com";
+        user.delete(dummyEmail);
         userRepository.save(user);
     }
 
