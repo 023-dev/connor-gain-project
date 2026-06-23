@@ -26,7 +26,7 @@ public record PostResponse(
         return new PostResponse(
                 post.id(),
                 post.userId(),
-                user.nickname(),
+                user == null ? "알 수 없음" : user.nickname(),
                 post.title(),
                 post.content(),
                 post.imageUrl(),

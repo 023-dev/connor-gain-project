@@ -19,7 +19,7 @@ public record CommentResponse(
                 comment.id(),
                 comment.postId(),
                 comment.userId(),
-                user.nickname(),
+                user == null ? "알 수 없음" : user.nickname(),
                 comment.content()
         );
     }
