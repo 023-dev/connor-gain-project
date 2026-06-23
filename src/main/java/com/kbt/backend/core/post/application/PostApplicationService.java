@@ -9,6 +9,7 @@ import com.kbt.backend.core.post.application.dto.PostUpdateResponse;
 import com.kbt.backend.core.post.application.like.LikeQueryService;
 import com.kbt.backend.common.domain.CursorPage;
 import com.kbt.backend.core.post.domain.Post;
+import com.kbt.backend.core.post.infrastructure.PostRepository;
 import com.kbt.backend.core.user.application.UserQueryService;
 import com.kbt.backend.core.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class PostApplicationService {
     private final PostQueryService postQueryService;
     private final LikeQueryService likeQueryService;
     private final UserQueryService userQueryService;
+    private final PostRepository postRepository;
 
     public PostCreateResponse create(
             final String userId,
@@ -56,17 +58,8 @@ public class PostApplicationService {
             final String cursor,
             final int size
     ) {
-        final CursorPage<Post> page = postQueryService.findAll(cursor, size);
-
-        final List<PostResponse> posts = page.items().stream()
-                .map(post -> PostResponse.from(
-                        post,
-                        userQueryService.findUser(post.userId()),
-                        likeQueryService.isLikedByUser(post.id(), userId)
-                ))
-                .toList();
-
-        return new PostsResponse(posts, page.nextCursor(), page.hasNext());
+        final CursorPage<PostResponse> page = postRepository.findAllByCursor(userId, cursor, size);
+        return new PostsResponse(page.items(), page.nextCursor(), page.hasNext());
     }
 
     public PostUpdateResponse edit(
