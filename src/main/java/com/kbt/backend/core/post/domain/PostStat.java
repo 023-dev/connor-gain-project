@@ -35,7 +35,10 @@ public class PostStat {
     private long viewCount;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", referencedColumnName = "id", insertable = false, updatable = false)
+    @JoinColumns({
+        @JoinColumn(name = "post_id", referencedColumnName = "id", insertable = false, updatable = false),
+        @JoinColumn(name = "id2", referencedColumnName = "user_id", insertable = false, updatable = false)
+    })
     private Post post;
 
     @Builder

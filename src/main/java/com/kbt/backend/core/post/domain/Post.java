@@ -21,7 +21,8 @@ import static com.kbt.backend.common.utils.Functions.update;
 public class Post extends BaseEntity {
 
     @Id
-    @Column(name = "id", unique = true)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "post_seq")
+    @SequenceGenerator(name = "post_seq", sequenceName = "post_seq", allocationSize = 1)
     private Long id;
 
     @Id
@@ -166,6 +167,7 @@ public class Post extends BaseEntity {
         if (this.stat == null) {
             this.stat = PostStat.builder()
                     .postId(this.id)
+                    .id2(this.userId)
                     .likeCount(0)
                     .commentCount(0)
                     .viewCount(0)
