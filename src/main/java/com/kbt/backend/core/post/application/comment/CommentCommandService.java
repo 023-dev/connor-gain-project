@@ -7,17 +7,22 @@ import com.kbt.backend.core.post.application.PostQueryService;
 import com.kbt.backend.core.post.domain.Post;
 import com.kbt.backend.core.post.domain.comment.Comment;
 import com.kbt.backend.core.post.domain.comment.CommentEditor;
+import com.kbt.backend.core.post.domain.comment.DeletedComment;
+import com.kbt.backend.core.post.infrastructure.comment.DeletedCommentRepository;
 import com.kbt.backend.core.post.infrastructure.comment.CommentRepository;
 import com.kbt.backend.core.user.application.UserQueryService;
 import com.kbt.backend.core.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CommentCommandService {
 
     private final CommentRepository commentRepository;
+    private final DeletedCommentRepository deletedCommentRepository;
     private final UserQueryService userQueryService;
     private final PostQueryService postQueryService;
 
@@ -62,8 +67,21 @@ public class CommentCommandService {
     ) {
         validateWriter(comment, userId);
 
-        comment.delete();
-        commentRepository.saveAndFlush(comment);
+        // 1. 격리 백업 테이블에 저장
+        final DeletedComment deletedComment = DeletedComment.builder()
+                .commentId(comment.idLong())
+                .postId(comment.postIdLong())
+                .userId(comment.userIdLong())
+                .commentKey(comment.id())
+                .postKey(comment.postId())
+                .userKey(comment.userId())
+                .content(comment.content())
+                .build();
+        deletedCommentRepository.save(deletedComment);
+
+        // 2. 실서비스 테이블 댓글 삭제 및 마스킹 자동화 호출
+        commentRepository.delete(comment);
+        commentRepository.flush();
     }
 
     private void validateWriter(

@@ -8,7 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDateTime;
 
 import static com.kbt.backend.common.utils.Functions.update;
@@ -20,6 +21,8 @@ import static com.kbt.backend.common.utils.Functions.update;
                 @Index(name = "idx_comments_post_id", columnList = "post_id")
         }
 )
+@SQLDelete(sql = "UPDATE comments SET deleted_at = CURRENT_TIMESTAMP(6), content = '삭제된 댓글입니다.' WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter(AccessLevel.PRIVATE)
 @Accessors(fluent = true)
@@ -57,13 +60,13 @@ public class Comment extends BaseEntity {
             final String postId,
             final String userId,
             final String content,
-            final boolean deleted
+            final LocalDateTime deletedAt
     ) {
         this.key = id != null ? id : java.util.UUID.randomUUID().toString();
         this.postKey = postId;
         this.userKey = userId;
         this.content = content;
-        this.deletedAt = deleted ? LocalDateTime.now() : null;
+        this.deletedAt = deletedAt;
     }
 
     public String id() {

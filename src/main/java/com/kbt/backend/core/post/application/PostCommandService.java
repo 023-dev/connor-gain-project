@@ -3,9 +3,11 @@ package com.kbt.backend.core.post.application;
 import com.kbt.backend.common.exception.ApiException;
 import com.kbt.backend.common.exception.ErrorType;
 import com.kbt.backend.common.utils.UuidGenerator;
+import com.kbt.backend.core.post.domain.DeletedPost;
 import com.kbt.backend.core.post.domain.Post;
 import com.kbt.backend.core.post.domain.PostEditor;
 import com.kbt.backend.core.post.domain.PostStat;
+import com.kbt.backend.core.post.infrastructure.DeletedPostRepository;
 import com.kbt.backend.core.post.infrastructure.PostRepository;
 import com.kbt.backend.core.user.application.UserQueryService;
 import com.kbt.backend.core.user.domain.User;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostCommandService {
 
     private final PostRepository postRepository;
+    private final DeletedPostRepository deletedPostRepository;
     private final UserQueryService userQueryService;
 
     public Post create(
@@ -107,8 +110,20 @@ public class PostCommandService {
     ) {
         validateWriter(post, userId);
 
-        post.delete();
-        postRepository.save(post);
+        // 1. 격리 백업 테이블에 저장
+        final DeletedPost deletedPost = DeletedPost.builder()
+                .postId(post.idLong())
+                .userId(post.userIdLong())
+                .postKey(post.id())
+                .userKey(post.userId())
+                .title(post.title())
+                .content(post.content())
+                .imageUrl(post.imageUrl())
+                .build();
+        deletedPostRepository.save(deletedPost);
+
+        // 2. 실서비스 테이블 유저 게시글 삭제 및 익명화 자동화 호출
+        postRepository.delete(post);
     }
 
     private void validateWriter(

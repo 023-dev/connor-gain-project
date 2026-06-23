@@ -8,12 +8,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import java.time.LocalDateTime;
 
 import static com.kbt.backend.common.utils.Functions.update;
 
 @Entity
 @Table(name = "posts")
 @IdClass(PostId.class)
+@SQLDelete(sql = "UPDATE posts SET deleted_at = CURRENT_TIMESTAMP(6), title = '삭제된 게시글입니다.', content = '삭제된 게시글입니다.', image_url = null WHERE id = ? AND user_id = ?")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter(AccessLevel.PRIVATE)
 @Accessors(fluent = true)
@@ -44,8 +49,8 @@ public class Post extends BaseEntity {
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(nullable = false)
-    private boolean deleted;
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private PostStat stat;
@@ -60,14 +65,14 @@ public class Post extends BaseEntity {
             final long likeCount,
             final long commentCount,
             final long viewCount,
-            final boolean deleted
+            final LocalDateTime deletedAt
     ) {
         this.key = id != null ? id : java.util.UUID.randomUUID().toString();
         this.userKey = userId;
         this.title = title;
         this.content = content;
         this.imageUrl = imageUrl;
-        this.deleted = deleted;
+        this.deletedAt = deletedAt;
         this.stat = null;
     }
 
@@ -89,10 +94,6 @@ public class Post extends BaseEntity {
 
     public void assignUserId(final Long userId) {
         this.userId = userId;
-        if (this.stat != null) {
-            // Update postId in stat as well if post id is already present
-            // But we will typically assign stat after saving the post.
-        }
     }
 
     public void assignId(final Long id) {
@@ -175,7 +176,11 @@ public class Post extends BaseEntity {
         }
     }
 
+    public boolean deleted() {
+        return this.deletedAt != null;
+    }
+
     public void delete() {
-        this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 }

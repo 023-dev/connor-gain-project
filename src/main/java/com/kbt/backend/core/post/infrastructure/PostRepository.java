@@ -14,7 +14,7 @@ import java.util.Optional;
 @Repository
 public interface PostRepository extends JpaRepository<Post, PostId>, PostRepositoryCustom {
 
-    @Query("select p from Post p where p.key = :key and p.deleted = false")
+    @Query("select p from Post p where p.key = :key")
     Optional<Post> findActiveById(@Param("key") final String key);
 
     @Modifying(clearAutomatically = true)

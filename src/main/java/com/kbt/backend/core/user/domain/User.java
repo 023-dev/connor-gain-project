@@ -1,4 +1,5 @@
 package com.kbt.backend.core.user.domain;
+
 import com.kbt.backend.common.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -7,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.SQLRestriction;
+import java.time.LocalDateTime;
 
 import static com.kbt.backend.common.utils.Functions.update;
 import static java.util.UUID.*;
@@ -38,8 +41,8 @@ public class User extends BaseEntity {
     @Column(name = "profile_image")
     private String profileImage;
 
-    @Column(nullable = false)
-    private boolean deleted;
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @Builder
     public User(
@@ -48,14 +51,14 @@ public class User extends BaseEntity {
             final String password,
             final String nickname,
             final String profileImage,
-            final boolean deleted
+            final LocalDateTime deletedAt
     ) {
         this.key = key != null ? key : randomUUID().toString();
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.profileImage = profileImage;
-        this.deleted = deleted;
+        this.deletedAt = deletedAt;
     }
 
     public String id() {
@@ -68,6 +71,10 @@ public class User extends BaseEntity {
 
     public Long idLong() {
         return this.id;
+    }
+
+    public boolean deleted() {
+        return this.deletedAt != null;
     }
 
     public UserEditor.UserEditorBuilder toEditor() {
@@ -91,10 +98,10 @@ public class User extends BaseEntity {
     }
 
     public void delete(final String dummyEmail) {
-        this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
         this.nickname = "알 수 없음";
         this.email = dummyEmail;
-        this.password = "DELETED_USER_PASSWORD_HASH_" + java.util.UUID.randomUUID();
+        this.password = "DELETED_USER_PASSWORD_HASH_" + randomUUID();
         this.profileImage = null;
     }
 }

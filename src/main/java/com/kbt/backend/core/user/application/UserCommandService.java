@@ -46,7 +46,7 @@ public class UserCommandService {
             final String email,
             final String password
     ) {
-        final User user = userRepository.findByEmailAndDeletedFalse(email)
+        final User user = userRepository.findByEmailAndDeletedAtIsNull(email)
                 .orElseThrow(() -> new ApiException(ErrorType.INVALID_CREDENTIALS));
 
         if (!user.password().equals(password)) {
@@ -109,21 +109,21 @@ public class UserCommandService {
     }
 
     private void validateDuplicateEmail(final String email) {
-        userRepository.findByEmailAndDeletedFalse(email)
+        userRepository.findByEmailAndDeletedAtIsNull(email)
                 .ifPresent(user -> {
                     throw new ApiException(ErrorType.DUPLICATE_EMAIL);
                 });
     }
 
     private void validateDuplicateNickname(final String nickname) {
-        userRepository.findByNicknameAndDeletedFalse(nickname)
+        userRepository.findByNicknameAndDeletedAtIsNull(nickname)
                 .ifPresent(user -> {
                     throw new ApiException(ErrorType.DUPLICATE_NICKNAME);
                 });
     }
 
     private User findActiveUser(final String userId) {
-        return userRepository.findByKeyAndDeletedFalse(userId)
+        return userRepository.findByKeyAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new ApiException(ErrorType.USER_NOT_FOUND));
     }
 }

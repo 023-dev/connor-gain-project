@@ -28,7 +28,7 @@ class PostCommandServiceTest {
 
     @Test
     void concurrentViewCountIncreaseDoesNotLoseUpdates() throws Exception {
-        if (userRepository.findByKeyAndDeletedFalse("concurrent-user").isEmpty()) {
+        if (userRepository.findByKeyAndDeletedAtIsNull("concurrent-user").isEmpty()) {
             userRepository.save(com.kbt.backend.core.user.domain.User.builder()
                     .key("concurrent-user")
                     .email("concurrent@kbt.com")

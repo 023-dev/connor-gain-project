@@ -3,6 +3,7 @@ package com.kbt.backend.core.post.infrastructure.like;
 import com.kbt.backend.core.post.domain.like.Like;
 import com.kbt.backend.core.post.domain.like.LikeId;
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -16,18 +17,19 @@ public interface LikeRepository extends JpaRepository<Like, LikeId> {
             @Param("userId") final String userId
     );
 
-    @Query("select l from Like l where l.postKey = :postId and l.userKey = :userId and l.deleted = false")
+    @Query("select l from Like l where l.postKey = :postId and l.userKey = :userId and l.deletedAt is null")
     Optional<Like> findActiveByPostIdAndUserId(
             @Param("postId") final String postId,
             @Param("userId") final String userId
     );
 
-    @Query("select count(l) > 0 from Like l where l.postKey = :postId and l.userKey = :userId and l.deleted = false")
+    @Query("select count(l) > 0 from Like l where l.postKey = :postId and l.userKey = :userId and l.deletedAt is null")
     boolean existsActiveByPostIdAndUserId(
             @Param("postId") final String postId,
             @Param("userId") final String userId
     );
 
-    @Query("select count(l) from Like l where l.postKey = :postId and l.deleted = false")
+    @Query("select count(l) from Like l where l.postKey = :postId and l.deletedAt is null")
     long countActiveByPostId(@Param("postId") final String postId);
 }
+

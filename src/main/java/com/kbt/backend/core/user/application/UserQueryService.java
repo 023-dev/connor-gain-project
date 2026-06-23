@@ -6,9 +6,11 @@ import com.kbt.backend.core.user.domain.User;
 import com.kbt.backend.core.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserQueryService {
 
     private final UserRepository userRepository;
@@ -18,7 +20,7 @@ public class UserQueryService {
     }
 
     public User findActiveUser(final String userId) {
-        return userRepository.findByKeyAndDeletedFalse(userId)
+        return userRepository.findByKeyAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new ApiException(ErrorType.USER_NOT_FOUND));
     }
 

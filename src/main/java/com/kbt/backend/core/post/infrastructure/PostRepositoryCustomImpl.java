@@ -1,45 +1,40 @@
 package com.kbt.backend.core.post.infrastructure;
 
 import com.kbt.backend.common.domain.CursorPage;
+import com.kbt.backend.common.exception.ApiException;
+import com.kbt.backend.common.exception.ErrorType;
 import com.kbt.backend.common.utils.CursorUtils;
 import com.kbt.backend.core.post.application.dto.PostResponse;
-import com.kbt.backend.core.post.domain.Post;
-import com.kbt.backend.core.post.domain.QPost;
-import com.kbt.backend.core.post.domain.QPostStat;
-import com.kbt.backend.core.post.domain.like.QLike;
-import com.kbt.backend.core.user.domain.QUser;
 import com.kbt.backend.core.user.domain.User;
 import com.kbt.backend.core.user.infrastructure.UserRepository;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.StringExpression;
-import com.querydsl.jpa.JPQLQuery;
-import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
-import com.kbt.backend.common.exception.ApiException;
-import com.kbt.backend.common.exception.ErrorType;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public class PostRepositoryCustomImpl extends QuerydslRepositorySupport implements PostRepositoryCustom {
+import static com.kbt.backend.core.post.domain.QPost.post;
+import static com.kbt.backend.core.post.domain.QPostStat.postStat;
+import static com.kbt.backend.core.post.domain.like.QLike.like;
+import static com.kbt.backend.core.user.domain.QUser.user;
+
+@Repository
+@RequiredArgsConstructor
+public class PostRepositoryCustomImpl implements PostRepositoryCustom {
 
     private final UserRepository userRepository;
-
-    public PostRepositoryCustomImpl(UserRepository userRepository) {
-        super(Post.class);
-        this.userRepository = userRepository;
-    }
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public CursorPage<PostResponse> findAllByCursor(final Optional<String> loginUserKey, final String cursor, final int limit) {
-        QPost post = QPost.post;
-        QUser user = QUser.user;
-        QPostStat stat = QPostStat.postStat;
-        QLike like = QLike.like;
-
         Long loginUserId = null;
         if (loginUserKey.isPresent() && StringUtils.hasText(loginUserKey.get())) {
             loginUserId = userRepository.findByKey(loginUserKey.get())
@@ -65,37 +60,16 @@ public class PostRepositoryCustomImpl extends QuerydslRepositorySupport implemen
             }
         }
 
-        JPQLQuery<Post> baseQuery = from(post);
-
-        baseQuery.leftJoin(user).on(post.userId.eq(user.id))
-                 .join(stat).on(post.id.eq(stat.id).and(post.userId.eq(stat.userId)));
+        StringExpression nicknameExpression = user.nickname.coalesce("알 수 없음");
 
         BooleanExpression isLikedExpression;
         if (loginUserId != null) {
-            baseQuery.leftJoin(like).on(
-                    post.id.eq(like.postId)
-                    .and(post.userId.eq(like.id2))
-                    .and(like.userId.eq(loginUserId))
-                    .and(like.deleted.isFalse())
-            );
             isLikedExpression = like.isNotNull();
         } else {
             isLikedExpression = Expressions.asBoolean(false);
         }
 
-        baseQuery.where(post.deleted.isFalse());
-        if (cursorCreatedAt != null && cursorPostKey != null) {
-            baseQuery.where(
-                    post.createdAt.before(cursorCreatedAt)
-                    .or(post.createdAt.eq(cursorCreatedAt).and(post.key.lt(cursorPostKey)))
-            );
-        }
-
-        baseQuery.orderBy(post.createdAt.desc(), post.key.desc());
-
-        StringExpression nicknameExpression = user.nickname.coalesce("알 수 없음");
-
-        JPQLQuery<PostResponse> projectionQuery = baseQuery.select(
+        JPAQuery<PostResponse> query = queryFactory.select(
                 Projections.constructor(
                         PostResponse.class,
                         post.key,
@@ -104,15 +78,36 @@ public class PostRepositoryCustomImpl extends QuerydslRepositorySupport implemen
                         post.title,
                         post.content,
                         post.imageUrl,
-                        stat.likeCount,
-                        stat.commentCount,
-                        stat.viewCount,
+                        postStat.likeCount,
+                        postStat.commentCount,
+                        postStat.viewCount,
                         isLikedExpression,
                         post.createdAt
                 )
-        );
+        ).from(post)
+        .leftJoin(user).on(post.userId.eq(user.id))
+        .join(postStat).on(post.id.eq(postStat.id).and(post.userId.eq(postStat.userId)));
 
-        List<PostResponse> results = projectionQuery.limit(limit + 1).fetch();
+        if (loginUserId != null) {
+            query.leftJoin(like).on(
+                    post.id.eq(like.postId)
+                    .and(post.userId.eq(like.id2))
+                    .and(like.userId.eq(loginUserId))
+                    .and(like.deletedAt.isNull())
+            );
+        }
+
+        query.where(post.deletedAt.isNull());
+        if (cursorCreatedAt != null && cursorPostKey != null) {
+            query.where(
+                    post.createdAt.before(cursorCreatedAt)
+                    .or(post.createdAt.eq(cursorCreatedAt).and(post.key.lt(cursorPostKey)))
+            );
+        }
+
+        query.orderBy(post.createdAt.desc(), post.key.desc());
+
+        List<PostResponse> results = query.limit(limit + 1).fetch();
 
         boolean hasNext = results.size() > limit;
         List<PostResponse> visibleResults = hasNext ? results.subList(0, limit) : results;

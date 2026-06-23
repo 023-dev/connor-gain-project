@@ -6,7 +6,7 @@ spring:
       max-file-size: 5MB
       max-request-size: 5MB
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    generate-unique-name: true
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -22,7 +22,6 @@ spring:
     init:
       mode: always
       data-locations: classpath:db/data.sql
-
 
 jwt:
   secret-key: local-development-secret-key-1234567890

@@ -8,6 +8,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(
@@ -15,6 +18,7 @@ import lombok.experimental.Accessors;
         uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "post_id"})
 )
 @IdClass(LikeId.class)
+@SQLDelete(sql = "UPDATE post_likes SET deleted_at = CURRENT_TIMESTAMP(6) WHERE id = ? AND user_id = ? AND post_id = ? AND id2 = ?")
 @Getter
 @Setter(AccessLevel.PRIVATE)
 @Accessors(fluent = true)
@@ -47,20 +51,20 @@ public class Like extends BaseEntity {
     @Column(name = "post_key", columnDefinition = "char(36)", nullable = false)
     private String postKey;
 
-    @Column(nullable = false)
-    private boolean deleted;
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @Builder
     public Like(
             final String id,
             final String postId,
             final String userId,
-            final boolean deleted
+            final LocalDateTime deletedAt
     ) {
         this.key = id != null ? id : java.util.UUID.randomUUID().toString();
         this.postKey = postId;
         this.userKey = userId;
-        this.deleted = deleted;
+        this.deletedAt = deletedAt;
     }
 
     public String id() {
@@ -97,11 +101,15 @@ public class Like extends BaseEntity {
         this.id2 = id2;
     }
 
+    public boolean deleted() {
+        return this.deletedAt != null;
+    }
+
     public void activate() {
-        this.deleted = false;
+        this.deletedAt = null;
     }
 
     public void delete() {
-        this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 }
