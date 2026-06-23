@@ -86,11 +86,17 @@ public class InitialDataLoader implements ApplicationRunner {
         readJsonSeedData(COMMENT_SEED_PATH, CommentSeedData.class).stream()
                 .map(CommentSeedData::toComment)
                 .forEach(comment -> {
-                    commentRepository.save(comment);
-                    postRepository.findActiveById(comment.postId())
-                            .ifPresent(post -> {
-                                postRepository.incrementCommentCount(post.idLong());
-                            });
+                    final User user = userRepository.findByKey(comment.userId())
+                            .orElseThrow(() -> new IllegalStateException("User not found for seed comment: " + comment.userId()));
+                    final Post post = postRepository.findActiveById(comment.postId())
+                            .orElseThrow(() -> new IllegalStateException("Post not found for seed comment: " + comment.postId()));
+
+                    comment.assignIds(user.idLong(), post.idLong());
+                    commentRepository.saveAndFlush(comment);
+
+                    if (!comment.deleted()) {
+                        postRepository.incrementCommentCount(post.idLong());
+                    }
                 });
     }
 

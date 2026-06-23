@@ -3,8 +3,12 @@ package com.kbt.backend.core.post.application.like;
 import com.kbt.backend.common.exception.ApiException;
 import com.kbt.backend.common.exception.ErrorType;
 import com.kbt.backend.common.utils.UuidGenerator;
+import com.kbt.backend.core.post.application.PostQueryService;
+import com.kbt.backend.core.post.domain.Post;
 import com.kbt.backend.core.post.domain.like.Like;
 import com.kbt.backend.core.post.infrastructure.like.LikeRepository;
+import com.kbt.backend.core.user.application.UserQueryService;
+import com.kbt.backend.core.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +17,8 @@ import org.springframework.stereotype.Service;
 public class LikeCommandService {
 
     private final LikeRepository likeRepository;
+    private final UserQueryService userQueryService;
+    private final PostQueryService postQueryService;
 
     public Like like(
             final String userId,
@@ -22,6 +28,9 @@ public class LikeCommandService {
             throw new ApiException(ErrorType.ALREADY_LIKED);
         }
 
+        final User user = userQueryService.findActiveUser(userId);
+        final Post post = postQueryService.findOne(postId);
+
         final Like like = likeRepository.findByPostIdAndUserId(postId, userId)
                 .orElseGet(() -> Like.builder()
                         .id(UuidGenerator.generate())
@@ -29,8 +38,9 @@ public class LikeCommandService {
                         .userId(userId)
                         .build());
 
+        like.assignIds(user.idLong(), post.idLong(), post.userIdLong());
         like.activate();
-        return likeRepository.save(like);
+        return likeRepository.saveAndFlush(like);
     }
 
     public void unlike(
@@ -41,6 +51,6 @@ public class LikeCommandService {
                 .orElseThrow(() -> new ApiException(ErrorType.NOT_LIKED));
 
         like.delete();
-        likeRepository.save(like);
+        likeRepository.saveAndFlush(like);
     }
 }

@@ -93,8 +93,8 @@ public class CommentApplicationService {
         final Comment comment = commentQueryService.findOne(commentId);
         validateBelongsToPost(comment, postId);
 
-        postCommandService.decreaseCommentCount(post);
         commentCommandService.delete(user.id(), comment);
+        postCommandService.decreaseCommentCount(post);
     }
 
     private void validateBelongsToPost(

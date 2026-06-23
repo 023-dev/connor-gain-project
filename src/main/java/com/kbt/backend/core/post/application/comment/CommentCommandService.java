@@ -3,9 +3,13 @@ package com.kbt.backend.core.post.application.comment;
 import com.kbt.backend.common.exception.ApiException;
 import com.kbt.backend.common.exception.ErrorType;
 import com.kbt.backend.common.utils.UuidGenerator;
+import com.kbt.backend.core.post.application.PostQueryService;
+import com.kbt.backend.core.post.domain.Post;
 import com.kbt.backend.core.post.domain.comment.Comment;
 import com.kbt.backend.core.post.domain.comment.CommentEditor;
 import com.kbt.backend.core.post.infrastructure.comment.CommentRepository;
+import com.kbt.backend.core.user.application.UserQueryService;
+import com.kbt.backend.core.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,12 +18,17 @@ import org.springframework.stereotype.Service;
 public class CommentCommandService {
 
     private final CommentRepository commentRepository;
+    private final UserQueryService userQueryService;
+    private final PostQueryService postQueryService;
 
     public Comment create(
             final String userId,
             final String postId,
             final String content
     ) {
+        final User user = userQueryService.findActiveUser(userId);
+        final Post post = postQueryService.findOne(postId);
+
         final Comment comment = Comment.builder()
                 .id(UuidGenerator.generate())
                 .postId(postId)
@@ -27,7 +36,9 @@ public class CommentCommandService {
                 .content(content)
                 .build();
 
-        return commentRepository.save(comment);
+        comment.assignIds(user.idLong(), post.idLong());
+
+        return commentRepository.saveAndFlush(comment);
     }
 
     public Comment edit(
@@ -42,7 +53,7 @@ public class CommentCommandService {
                 .build();
 
         comment.edit(editor);
-        return commentRepository.save(comment);
+        return commentRepository.saveAndFlush(comment);
     }
 
     public void delete(
@@ -52,7 +63,7 @@ public class CommentCommandService {
         validateWriter(comment, userId);
 
         comment.delete();
-        commentRepository.save(comment);
+        commentRepository.saveAndFlush(comment);
     }
 
     private void validateWriter(
