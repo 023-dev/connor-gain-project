@@ -97,7 +97,7 @@ class ImageControllerTest {
 
     @Test
     void uploadRejectsNonMultipartRequest() throws Exception {
-        mockMvc.perform(post("/api/images")
+        mockMvc.perform(post("/images")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
