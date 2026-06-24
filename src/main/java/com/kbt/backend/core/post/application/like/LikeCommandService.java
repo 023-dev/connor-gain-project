@@ -32,13 +32,13 @@ public class LikeCommandService {
         final Post post = postQueryService.findOne(postId);
 
         final Like like = likeRepository.findByPostIdAndUserId(postId, userId)
-                .orElseGet(() -> Like.builder()
-                        .id(UuidGenerator.generate())
-                        .postId(postId)
-                        .userId(userId)
-                        .build());
+                .orElseGet(() -> Like.create(
+                        userId,
+                        user.idLong(),
+                        postId,
+                        post.idLong()
+                ));
 
-        like.assignIds(user.idLong(), post.idLong(), post.userIdLong());
         like.activate();
         return likeRepository.saveAndFlush(like);
     }

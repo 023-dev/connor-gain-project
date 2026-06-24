@@ -61,4 +61,16 @@ public class DeletedPost {
         this.imageUrl = imageUrl;
         this.deletedAt = deletedAt != null ? deletedAt : LocalDateTime.now();
     }
+
+    public static DeletedPost from(final Post post) {
+        return DeletedPost.builder()
+                .postId(post.idLong())
+                .userId(post.userIdLong())
+                .postKey(post.id())
+                .userKey(post.userId())
+                .title(post.title())
+                .content(post.content())
+                .imageUrl(post.imageUrl())
+                .build();
+    }
 }

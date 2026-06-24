@@ -32,30 +32,11 @@ public class PostCommandService {
     ) {
         final User user = userQueryService.findActiveUser(userId);
 
-        final Post post = Post.builder()
-                .id(UuidGenerator.generate())
-                .userId(userId)
-                .title(title)
-                .content(content)
-                .imageUrl(imageUrl)
-                .likeCount(0L)
-                .commentCount(0L)
-                .viewCount(0L)
-                .build();
-
-        post.assignUserId(user.idLong());
+        final Post post = Post.create(userId, user.idLong(), title, content, imageUrl);
 
         final Post savedPost = postRepository.save(post);
+        savedPost.initializeStat();
 
-        final PostStat stat = PostStat.builder()
-                .postId(savedPost.idLong())
-                .id2(savedPost.userIdLong())
-                .likeCount(0L)
-                .commentCount(0L)
-                .viewCount(0L)
-                .build();
-
-        savedPost.assignStat(stat);
         return postRepository.save(savedPost);
     }
 
@@ -111,15 +92,7 @@ public class PostCommandService {
         validateWriter(post, userId);
 
         // 1. 격리 백업 테이블에 저장
-        final DeletedPost deletedPost = DeletedPost.builder()
-                .postId(post.idLong())
-                .userId(post.userIdLong())
-                .postKey(post.id())
-                .userKey(post.userId())
-                .title(post.title())
-                .content(post.content())
-                .imageUrl(post.imageUrl())
-                .build();
+        final DeletedPost deletedPost = DeletedPost.from(post);
         deletedPostRepository.save(deletedPost);
 
         // 2. 실서비스 테이블 유저 게시글 삭제 및 익명화 자동화 호출

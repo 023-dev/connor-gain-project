@@ -86,12 +86,11 @@ public class PostRepositoryCustomImpl implements PostRepositoryCustom {
                 )
         ).from(post)
         .leftJoin(user).on(post.userId.eq(user.id))
-        .join(postStat).on(post.id.eq(postStat.id).and(post.userId.eq(postStat.userId)));
+        .join(postStat).on(post.id.eq(postStat.id));
 
         if (loginUserId != null) {
             query.leftJoin(like).on(
                     post.id.eq(like.postId)
-                    .and(post.userId.eq(like.id2))
                     .and(like.userId.eq(loginUserId))
                     .and(like.deletedAt.isNull())
             );

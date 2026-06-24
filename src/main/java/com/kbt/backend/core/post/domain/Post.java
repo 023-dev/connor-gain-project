@@ -12,12 +12,13 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDateTime;
 
+import com.kbt.backend.common.utils.UuidGenerator;
+
 import static com.kbt.backend.common.utils.Functions.update;
 
 @Entity
 @Table(name = "posts")
-@IdClass(PostId.class)
-@SQLDelete(sql = "UPDATE posts SET deleted_at = CURRENT_TIMESTAMP(6), title = '삭제된 게시글입니다.', content = '삭제된 게시글입니다.', image_url = null WHERE id = ? AND user_id = ?")
+@SQLDelete(sql = "UPDATE posts SET deleted_at = CURRENT_TIMESTAMP(6), title = '삭제된 게시글입니다.', content = '삭제된 게시글입니다.', image_url = null WHERE id = ?")
 @SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter(AccessLevel.PRIVATE)
@@ -26,12 +27,10 @@ import static com.kbt.backend.common.utils.Functions.update;
 public class Post extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "post_seq")
-    @SequenceGenerator(name = "post_seq", sequenceName = "post_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Id
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @Column(name = "external_id", columnDefinition = "char(36)", nullable = false, unique = true)
@@ -62,12 +61,9 @@ public class Post extends BaseEntity {
             final String title,
             final String content,
             final String imageUrl,
-            final long likeCount,
-            final long commentCount,
-            final long viewCount,
             final LocalDateTime deletedAt
     ) {
-        this.key = id != null ? id : java.util.UUID.randomUUID().toString();
+        this.key = id != null ? id : UuidGenerator.generate();
         this.userKey = userId;
         this.title = title;
         this.content = content;
@@ -75,6 +71,35 @@ public class Post extends BaseEntity {
         this.deletedAt = deletedAt;
         this.stat = null;
     }
+
+    public static Post create(
+            final String userKey,
+            final Long userId,
+            final String title,
+            final String content,
+            final String imageUrl
+    ) {
+        final Post post = Post.builder()
+                .userId(userKey)
+                .title(title)
+                .content(content)
+                .imageUrl(imageUrl)
+                .build();
+        post.assignUserId(userId);
+        return post;
+    }
+
+    public void initializeStat() {
+        if (this.stat == null) {
+            this.stat = PostStat.builder()
+                    .postId(this.id)
+                    .likeCount(0L)
+                    .commentCount(0L)
+                    .viewCount(0L)
+                    .build();
+        }
+    }
+
 
     public String id() {
         return this.key;
@@ -168,7 +193,6 @@ public class Post extends BaseEntity {
         if (this.stat == null) {
             this.stat = PostStat.builder()
                     .postId(this.id)
-                    .id2(this.userId)
                     .likeCount(0)
                     .commentCount(0)
                     .viewCount(0)

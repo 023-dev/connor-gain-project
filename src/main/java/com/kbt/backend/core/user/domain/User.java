@@ -11,6 +11,8 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDateTime;
 
+import com.kbt.backend.common.utils.UuidGenerator;
+
 import static com.kbt.backend.common.utils.Functions.update;
 import static java.util.UUID.*;
 
@@ -53,13 +55,28 @@ public class User extends BaseEntity {
             final String profileImage,
             final LocalDateTime deletedAt
     ) {
-        this.key = key != null ? key : randomUUID().toString();
+        this.key = key != null ? key : UuidGenerator.generate();
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.profileImage = profileImage;
         this.deletedAt = deletedAt;
     }
+
+    public static User create(
+            final String email,
+            final String password,
+            final String nickname,
+            final String profileImage
+    ) {
+        return User.builder()
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .profileImage(profileImage)
+                .build();
+    }
+
 
     public String id() {
         return this.key;

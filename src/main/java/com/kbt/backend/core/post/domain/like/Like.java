@@ -12,13 +12,14 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDateTime;
 
+import com.kbt.backend.common.utils.UuidGenerator;
+
 @Entity
 @Table(
         name = "post_likes",
         uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "post_id"})
 )
-@IdClass(LikeId.class)
-@SQLDelete(sql = "UPDATE post_likes SET deleted_at = CURRENT_TIMESTAMP(6) WHERE id = ? AND user_id = ? AND post_id = ? AND id2 = ?")
+@SQLDelete(sql = "UPDATE post_likes SET deleted_at = CURRENT_TIMESTAMP(6) WHERE id = ?")
 @Getter
 @Setter(AccessLevel.PRIVATE)
 @Accessors(fluent = true)
@@ -26,21 +27,14 @@ import java.time.LocalDateTime;
 public class Like extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "like_seq")
-    @SequenceGenerator(name = "like_seq", sequenceName = "like_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Id
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Id
-    @Column(name = "post_id")
+    @Column(name = "post_id", nullable = false)
     private Long postId;
-
-    @Id
-    @Column(name = "id2")
-    private Long id2;
 
     @Column(name = "external_id", columnDefinition = "char(36)", nullable = false, unique = true)
     private String key;
@@ -61,11 +55,26 @@ public class Like extends BaseEntity {
             final String userId,
             final LocalDateTime deletedAt
     ) {
-        this.key = id != null ? id : java.util.UUID.randomUUID().toString();
+        this.key = id != null ? id : UuidGenerator.generate();
         this.postKey = postId;
         this.userKey = userId;
         this.deletedAt = deletedAt;
     }
+
+    public static Like create(
+            final String userKey,
+            final Long userId,
+            final String postKey,
+            final Long postId
+    ) {
+        final Like like = Like.builder()
+                .postId(postKey)
+                .userId(userKey)
+                .build();
+        like.assignIds(userId, postId);
+        return like;
+    }
+
 
     public String id() {
         return this.key;
@@ -91,14 +100,9 @@ public class Like extends BaseEntity {
         return this.postId;
     }
 
-    public Long id2Long() {
-        return this.id2;
-    }
-
-    public void assignIds(final Long userId, final Long postId, final Long id2) {
+    public void assignIds(final Long userId, final Long postId) {
         this.userId = userId;
         this.postId = postId;
-        this.id2 = id2;
     }
 
     public boolean deleted() {

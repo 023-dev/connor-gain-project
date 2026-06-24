@@ -61,4 +61,16 @@ public class DeletedComment {
         this.content = content;
         this.deletedAt = deletedAt != null ? deletedAt : LocalDateTime.now();
     }
+
+    public static DeletedComment from(final Comment comment) {
+        return DeletedComment.builder()
+                .commentId(comment.idLong())
+                .postId(comment.postIdLong())
+                .userId(comment.userIdLong())
+                .commentKey(comment.id())
+                .postKey(comment.postId())
+                .userKey(comment.userId())
+                .content(comment.content())
+                .build();
+    }
 }

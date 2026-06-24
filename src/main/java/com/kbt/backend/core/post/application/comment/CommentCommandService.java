@@ -34,14 +34,7 @@ public class CommentCommandService {
         final User user = userQueryService.findActiveUser(userId);
         final Post post = postQueryService.findOne(postId);
 
-        final Comment comment = Comment.builder()
-                .id(UuidGenerator.generate())
-                .postId(postId)
-                .userId(userId)
-                .content(content)
-                .build();
-
-        comment.assignIds(user.idLong(), post.idLong());
+        final Comment comment = Comment.create(userId, user.idLong(), postId, post.idLong(), content);
 
         return commentRepository.saveAndFlush(comment);
     }
@@ -68,15 +61,7 @@ public class CommentCommandService {
         validateWriter(comment, userId);
 
         // 1. 격리 백업 테이블에 저장
-        final DeletedComment deletedComment = DeletedComment.builder()
-                .commentId(comment.idLong())
-                .postId(comment.postIdLong())
-                .userId(comment.userIdLong())
-                .commentKey(comment.id())
-                .postKey(comment.postId())
-                .userKey(comment.userId())
-                .content(comment.content())
-                .build();
+        final DeletedComment deletedComment = DeletedComment.from(comment);
         deletedCommentRepository.save(deletedComment);
 
         // 2. 실서비스 테이블 댓글 삭제 및 마스킹 자동화 호출

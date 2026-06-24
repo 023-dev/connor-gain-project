@@ -1,7 +1,6 @@
 package com.kbt.backend.core.post.infrastructure;
 
 import com.kbt.backend.core.post.domain.Post;
-import com.kbt.backend.core.post.domain.PostId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Repository
-public interface PostRepository extends JpaRepository<Post, PostId>, PostRepositoryCustom {
+public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryCustom {
 
     @Query("select p from Post p where p.key = :key")
     Optional<Post> findActiveById(@Param("key") final String key);

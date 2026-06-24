@@ -1,7 +1,6 @@
 package com.kbt.backend.core.post.infrastructure.like;
 
 import com.kbt.backend.core.post.domain.like.Like;
-import com.kbt.backend.core.post.domain.like.LikeId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.jpa.repository.Query;
@@ -9,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface LikeRepository extends JpaRepository<Like, LikeId> {
+public interface LikeRepository extends JpaRepository<Like, Long> {
 
     @Query("select l from Like l where l.postKey = :postId and l.userKey = :userId")
     Optional<Like> findByPostIdAndUserId(

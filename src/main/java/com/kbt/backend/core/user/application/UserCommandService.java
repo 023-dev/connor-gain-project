@@ -31,13 +31,7 @@ public class UserCommandService {
         validateDuplicateEmail(email);
         validateDuplicateNickname(nickname);
 
-        final User user = User.builder()
-                .key(UuidGenerator.generate())
-                .email(email)
-                .password(password)
-                .nickname(nickname)
-                .profileImage(profileImage)
-                .build();
+        final User user = User.create(email, password, nickname, profileImage);
 
         return userRepository.save(user);
     }
@@ -95,11 +89,7 @@ public class UserCommandService {
         final User user = findActiveUser(userId);
 
         // 1. 탈퇴 유저 백업 정보 저장
-        final DeletedUser deletedUser = DeletedUser.builder()
-                .userKey(user.id())
-                .email(user.email())
-                .nickname(user.nickname())
-                .build();
+        final DeletedUser deletedUser = DeletedUser.from(user);
         deletedUserRepository.save(deletedUser);
 
         // 2. 실서비스 테이블 유저 정보 마스킹/익명화 및 탈퇴 처리

@@ -12,6 +12,8 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDateTime;
 
+import com.kbt.backend.common.utils.UuidGenerator;
+
 import static com.kbt.backend.common.utils.Functions.update;
 
 @Entity
@@ -62,12 +64,29 @@ public class Comment extends BaseEntity {
             final String content,
             final LocalDateTime deletedAt
     ) {
-        this.key = id != null ? id : java.util.UUID.randomUUID().toString();
+        this.key = id != null ? id : UuidGenerator.generate();
         this.postKey = postId;
         this.userKey = userId;
         this.content = content;
         this.deletedAt = deletedAt;
     }
+
+    public static Comment create(
+            final String userKey,
+            final Long userId,
+            final String postKey,
+            final Long postId,
+            final String content
+    ) {
+        final Comment comment = Comment.builder()
+                .postId(postKey)
+                .userId(userKey)
+                .content(content)
+                .build();
+        comment.assignIds(userId, postId);
+        return comment;
+    }
+
 
     public String id() {
         return this.key;

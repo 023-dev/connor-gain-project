@@ -40,5 +40,13 @@ public class DeletedUser {
         this.email = email;
         this.nickname = nickname;
         this.deletedAt = deletedAt != null ? deletedAt : LocalDateTime.now();
+     }
+
+    public static DeletedUser from(final User user) {
+        return DeletedUser.builder()
+                .userKey(user.id())
+                .email(user.email())
+                .nickname(user.nickname())
+                .build();
     }
 }
