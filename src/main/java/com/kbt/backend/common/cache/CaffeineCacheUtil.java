@@ -10,7 +10,7 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class LocalCacheUtil implements CacheUtil {
+public class CaffeineCacheUtil implements CacheUtil {
 
     private final Cache<String, CacheEntry<?>> cache;
 
