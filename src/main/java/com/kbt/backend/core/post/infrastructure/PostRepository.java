@@ -40,4 +40,28 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     @Transactional
     @Query("update PostStat ps set ps.commentCount = ps.commentCount - 1 where ps.id = :postId and ps.commentCount > 0")
     void decrementCommentCount(@Param("postId") Long postId);
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query("update PostStat ps set ps.viewCount = case when ps.viewCount + :delta < 0 then 0 else ps.viewCount + :delta end where ps.id = :postId")
+    void updateViewCount(
+            @Param("postId") Long postId,
+            @Param("delta") long delta
+    );
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query("update PostStat ps set ps.likeCount = case when ps.likeCount + :delta < 0 then 0 else ps.likeCount + :delta end where ps.id = :postId")
+    void updateLikeCount(
+            @Param("postId") Long postId,
+            @Param("delta") long delta
+    );
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query("update PostStat ps set ps.commentCount = case when ps.commentCount + :delta < 0 then 0 else ps.commentCount + :delta end where ps.id = :postId")
+    void updateCommentCount(
+            @Param("postId") Long postId,
+            @Param("delta") long delta
+    );
 }

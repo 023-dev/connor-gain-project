@@ -1,4 +1,4 @@
-package com.kbt.backend.common.config;
+package com.kbt.backend.common.config.web;
 
 import com.kbt.backend.core.auth.presentation.AccessTokenArgumentResolver;
 import com.kbt.backend.core.auth.presentation.AuthenticationInterceptor;
