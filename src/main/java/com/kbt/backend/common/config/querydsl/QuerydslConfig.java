@@ -1,4 +1,4 @@
-package com.kbt.backend.common.config;
+package com.kbt.backend.common.config.querydsl;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
