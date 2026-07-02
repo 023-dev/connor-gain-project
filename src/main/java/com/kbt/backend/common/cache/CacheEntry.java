@@ -1,14 +1,12 @@
 package com.kbt.backend.common.cache;
 
-import static java.lang.System.*;
-
 public class CacheEntry<T> {
     private final T value;
     private final long expiredAt;
 
     public CacheEntry(T value, long ttl) {
         this.value = value;
-        this.expiredAt = currentTimeMillis() + ttl;
+        this.expiredAt = System.currentTimeMillis() + ttl;
     }
 
     public T value() {
@@ -16,6 +14,6 @@ public class CacheEntry<T> {
     }
 
     public boolean isExpired() {
-        return expiredAt < currentTimeMillis();
+        return expiredAt < System.currentTimeMillis();
     }
 }
