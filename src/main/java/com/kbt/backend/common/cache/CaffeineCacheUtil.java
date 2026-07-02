@@ -30,7 +30,7 @@ public class CaffeineCacheUtil implements CacheUtil {
         try {
             return Optional.of(clazz.cast(entry.value()));
         } catch (ClassCastException e) {
-            log.error("[LocalCacheUtil:get]: {} 키에 대한  로컬 캐시 값 가져오기 실패 \n error: {}", key, e.getMessage());
+            log.error("[CaffeineCacheUtil:get]: {} 키에 대한 로컬 캐시 값 가져오기 실패", key, e);
             return Optional.empty();
         }
     }
